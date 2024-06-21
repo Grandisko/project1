@@ -1,4 +1,7 @@
 import sqlite3
+from PyQt5 import QtWidgets, QtCore
+from forcrut.Constants import Constants
+
 
 class Database:
     def __init__(self, db_file):
@@ -154,6 +157,10 @@ class Database:
         self.conn.commit()
 
     def get_transactions(self):
+        """
+        Извлекает все транзакции из таблицы Transactions.
+        :return:
+        """
         self.cursor.execute("SELECT * FROM Transactions")
         rows = self.cursor.fetchall()
         column_names = [desc[0] for desc in self.cursor.description]
@@ -215,7 +222,8 @@ class Database:
         self.conn.commit()
 
     def get_admin_params(self, login, password):
-        self.cursor.execute("SELECT inner, sell, client, redact, super FROM Admin WHERE login =? AND password =?", (login, password))
+        self.cursor.execute("SELECT inner, sell, client, redact, super FROM Admin WHERE login =? AND password =?",
+                            (login, password))
         row = self.cursor.fetchone()
         if row:
             return {'inner': row[0], 'ell': row[1], 'client': row[2], 'edact': row[3], 'uper': row[4]}
@@ -224,6 +232,7 @@ class Database:
 
     def close(self):
         self.conn.close()
+
 
 # Пример использования:
 db = Database("../database.db")
@@ -250,7 +259,7 @@ print(rows, column_names)
 db.close()
 
 tables = {
-    "Goods": ["id", "articul", "name", "price", "ex_time", "img"],
+    "Goods": [("id",), "articul", "name", "price", "ex_time", "img"],
     "GoodsWarehouse": ["id", "good_id", "warehouse_id", "count", "expire_date", "accept_date", "accept_id"],
     "Warehouse": ["id", "name", "coordinates_a", "coordinates_b", "adress"],
     "Client": ["id", "Fio", "telephone", "type"],
@@ -267,8 +276,6 @@ tables = {
 }
 
 functions = {
-    "create_tables": "Создает таблицы в базе данных, если они еще не существуют.",
-    "get_transactions": "Извлекает все транзакции из таблицы Transactions.",
     "get_warehouses": "Извлекает все склады из таблицы Warehouse.",
     "get_warehouse_goods": "Извлекает все товары с определенного склада.",
     "add_good": "Добавляет новый товар в таблицы Goods и GoodsWarehouse.",
