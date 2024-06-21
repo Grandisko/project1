@@ -131,6 +131,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+/forcrut/venv/
 
 # Spyder project settings
 .spyderproject
