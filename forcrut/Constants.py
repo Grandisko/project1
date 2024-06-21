@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtCore
 
 """
-	static function and Constants
+	Static functions and Constants
 """
 
 
@@ -23,7 +23,7 @@ class Constants:
 
 def centerWidget(width: int, height: int) -> tuple[int]:
 	"""
-
+		Сalculate screen center coordinates
 	"""
 	
 	bufferElem = QtWidgets.QApplication.desktop()
