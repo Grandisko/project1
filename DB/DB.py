@@ -177,6 +177,10 @@ class Database:
         return rows, column_names
 
     def get_all_goods(self):
+        """
+        Извлекает все товары из таблицы «Goods».
+        :return:
+        """
         self.cursor.execute("SELECT * FROM Goods")
         rows = self.cursor.fetchall()
         column_names = [desc[0] for desc in self.cursor.description]
@@ -222,7 +226,7 @@ class Database:
         self.conn.close()
 
 # Пример использования:
-db = Database("database.db")
+db = Database("../database.db")
 db.create_tables()
 
 # добавление данных
@@ -267,7 +271,6 @@ functions = {
     "get_transactions": "Извлекает все транзакции из таблицы Transactions.",
     "get_warehouses": "Извлекает все склады из таблицы Warehouse.",
     "get_warehouse_goods": "Извлекает все товары с определенного склада.",
-    "get_all_goods": "Извлекает все товары из таблицы «Goods».",
     "add_good": "Добавляет новый товар в таблицы Goods и GoodsWarehouse.",
     "add_warehouse": "Добавляет новый склад в таблицы Warehouse и GoodsWarehouse.",
     "delete_good": "Удаляет товар и связанные с ним данные из таблиц «Goods» и «GoodsWarehouse».",
