@@ -259,7 +259,7 @@ print(rows, column_names)
 db.close()
 
 tables = {
-    "Goods": [("id",), "articul", "name", "price", "ex_time", "img"],
+    "Goods": ["id", "articul", "name", "price", "ex_time", "img"],
     "GoodsWarehouse": ["id", "good_id", "warehouse_id", "count", "expire_date", "accept_date", "accept_id"],
     "Warehouse": ["id", "name", "coordinates_a", "coordinates_b", "adress"],
     "Client": ["id", "Fio", "telephone", "type"],
@@ -274,6 +274,21 @@ tables = {
     "WriteOff": ["id", "transaction_id", "from_wh"],
     "WriteOffData": ["id", "good_id", "write_of_id", "count", "expire_date"],
 }
+tables_types = {
+    "Goods": ["id", "articul", "name", "price", "ex_time", "img"],
+    "GoodsWarehouse": ["id", "good_id", "warehouse_id", "count", "expire_date", "accept_date", "accept_id"],
+    "Warehouse": ["id", "name", "coordinates_a", "coordinates_b", "adress"],
+    "Client": ["id", "Fio", "telephone", "type"],
+    "Admin": ["id", "login", "password", "inner", "sell", "client", "redact", "super"],
+    "Sell": ["id", "transaction_id", "client_id", "from_wh"],
+    "Transactions": ["id", "type", "who", "time", "PS"],
+    "Transportation": ["id", "transaction_id", "from_wh", "to_wh"],
+    "TransportationData": ["id", "good_id", "transportation_id", "count", "expire_date"],
+    "AcceptanceData": ["id", "good_id", "acceptance_id", "count", "expire_date"],
+    "Acceptance": ["id", "transaction_id", "to_wh"],
+    "SellData": ["id", "good_id", "sell_id", "count", "expire_date"],
+    "WriteOff": ["id", "transaction_id", "from_wh"],
+    "WriteOffData": ["id", "good_id", "write_of_id", "count", "expire_date"],}
 
 functions = {
     "get_warehouses": "Извлекает все склады из таблицы Warehouse.",
