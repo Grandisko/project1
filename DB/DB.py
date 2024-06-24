@@ -311,7 +311,7 @@ tables_types = {
     "GoodsWarehouse": ["FOREIGN_KEY", "FOREIGN_KEY", "FOREIGN_KEY", "NUMERIC", "DATETIME", "DATETIME", "accept_id"],
     "Warehouse": ["FOREIGN_KEY", "TEXT", "NUMERIC", "NUMERIC", "TEXT"],
     "Client": ["FOREIGN_KEY", "TEXT", "NUMERIC", "TEXT"],
-    "Admin": ["FOREIGN_KEY", "TEXT", "TEXT", "BOOL", "BOOL", "TEXT", "BOOL", "BOOL"],
+    "Admin": ["FOREIGN_KEY", "TEXT", "TEXT", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL"],
     "Sell": ["FOREIGN_KEY", "FOREIGN_KEY", "FOREIGN_KEY", "TEXT"],
     "Transactions": ["FOREIGN_KEY", "TEXT", "TEXT", "DATETIME", "TEXT"],
     "Transportation": ["FOREIGN_KEY", "FOREIGN_KEY", "TEXT", "TEXT"],
