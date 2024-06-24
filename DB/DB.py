@@ -167,12 +167,20 @@ class Database:
         return rows, column_names
 
     def get_warehouses(self):
+        """
+        Извлекает все склады из таблицы Warehouse.
+        :return:
+        """
         self.cursor.execute("SELECT * FROM Warehouse")
         rows = self.cursor.fetchall()
         column_names = [desc[0] for desc in self.cursor.description]
         return rows, column_names
 
     def get_warehouse_goods(self, warehouse_id):
+        """
+                Извлекает все товары с определенного склада.
+                :return:
+                """
         self.cursor.execute("""
             SELECT g.id, g.articul, g.name, g.price, g.ex_time, g.img, gw.count, gw.expire_date
             FROM Goods g
@@ -194,6 +202,10 @@ class Database:
         return rows, column_names
 
     def add_good(self, good):
+        """
+               Добавляет новый товар в таблицы Goods и GoodsWarehouse.
+               :return:
+               """
         self.cursor.execute("""
             INSERT INTO Goods (articul, name, price, ex_time, img)
             VALUES (?,?,?,?,?)
@@ -201,6 +213,10 @@ class Database:
         self.conn.commit()
 
     def add_warehouse(self, warehouse):
+        """
+            Добавляет новый склад в таблицы Warehouse и GoodsWarehouse.
+            :return:
+        """
         self.cursor.execute("""
             INSERT INTO Warehouse (name, coordinates_a, coordinates_b, adress)
             VALUES (?,?,?,?)
@@ -208,20 +224,36 @@ class Database:
         self.conn.commit()
 
     def delete_good(self, good_id):
+        """
+            Удаляет товар и связанные с ним данные из таблиц «Goods» и «GoodsWarehouse».
+            :return:
+        """
         self.cursor.execute("DELETE FROM Goods WHERE id =?", (good_id,))
         self.cursor.execute("DELETE FROM GoodsWarehouse WHERE good_id =?", (good_id,))
         self.conn.commit()
 
     def delete_warehouse_good(self, good_id, warehouse_id):
+        """
+            Удаляет конкретный товар с определенного склада.
+            :return:
+        """
         self.cursor.execute("DELETE FROM GoodsWarehouse WHERE good_id =? AND warehouse_id =?", (good_id, warehouse_id))
         self.conn.commit()
 
     def delete_warehouse(self, warehouse_id):
+        """
+            Удаляет склад и связанные с ним данные из таблиц «Warehouse» и «GoodsWarehouse».
+            :return:
+        """
         self.cursor.execute("DELETE FROM Warehouse WHERE id =?", (warehouse_id,))
         self.cursor.execute("DELETE FROM GoodsWarehouse WHERE warehouse_id =?", (warehouse_id,))
         self.conn.commit()
 
     def get_admin_params(self, login, password):
+        """
+            Получает параметры администратора для данного логина и пароля.
+            :return:
+        """
         self.cursor.execute("SELECT inner, sell, client, redact, super FROM Admin WHERE login =? AND password =?",
                             (login, password))
         row = self.cursor.fetchone()
@@ -272,32 +304,20 @@ tables = {
     "Acceptance": ["id", "transaction_id", "to_wh"],
     "SellData": ["id", "good_id", "sell_id", "count", "expire_date"],
     "WriteOff": ["id", "transaction_id", "from_wh"],
-    "WriteOffData": ["id", "good_id", "write_of_id", "count", "expire_date"],
+    "WriteOffData": ["id", "good_id", "write_of_id", "count", "expire_date"]
 }
 tables_types = {
-    "Goods": ["id", "articul", "name", "price", "ex_time", "img"],
-    "GoodsWarehouse": ["id", "good_id", "warehouse_id", "count", "expire_date", "accept_date", "accept_id"],
-    "Warehouse": ["id", "name", "coordinates_a", "coordinates_b", "adress"],
-    "Client": ["id", "Fio", "telephone", "type"],
-    "Admin": ["id", "login", "password", "inner", "sell", "client", "redact", "super"],
-    "Sell": ["id", "transaction_id", "client_id", "from_wh"],
-    "Transactions": ["id", "type", "who", "time", "PS"],
-    "Transportation": ["id", "transaction_id", "from_wh", "to_wh"],
-    "TransportationData": ["id", "good_id", "transportation_id", "count", "expire_date"],
-    "AcceptanceData": ["id", "good_id", "acceptance_id", "count", "expire_date"],
-    "Acceptance": ["id", "transaction_id", "to_wh"],
-    "SellData": ["id", "good_id", "sell_id", "count", "expire_date"],
-    "WriteOff": ["id", "transaction_id", "from_wh"],
-    "WriteOffData": ["id", "good_id", "write_of_id", "count", "expire_date"],}
-
-functions = {
-    "get_warehouses": "Извлекает все склады из таблицы Warehouse.",
-    "get_warehouse_goods": "Извлекает все товары с определенного склада.",
-    "add_good": "Добавляет новый товар в таблицы Goods и GoodsWarehouse.",
-    "add_warehouse": "Добавляет новый склад в таблицы Warehouse и GoodsWarehouse.",
-    "delete_good": "Удаляет товар и связанные с ним данные из таблиц «Goods» и «GoodsWarehouse».",
-    "delete_warehouse_good": "Удаляет конкретный товар с определенного склада.",
-    "delete_warehouse": "Удаляет склад и связанные с ним данные из таблиц «Warehouse» и «GoodsWarehouse».",
-    "get_admin_params": "Получает параметры администратора для данного логина и пароля.",
-}
-print('Hello. Dima')
+    "Goods": ["FOREIGN_KEY", "TEXT", "TEXT", "NUMERIC", "DATETIME", "URL"],
+    "GoodsWarehouse": ["FOREIGN_KEY", "FOREIGN_KEY", "FOREIGN_KEY", "NUMERIC", "DATETIME", "DATETIME", "accept_id"],
+    "Warehouse": ["FOREIGN_KEY", "TEXT", "NUMERIC", "NUMERIC", "TEXT"],
+    "Client": ["FOREIGN_KEY", "TEXT", "NUMERIC", "TEXT"],
+    "Admin": ["FOREIGN_KEY", "TEXT", "TEXT", "BOOL", "BOOL", "TEXT", "BOOL", "BOOL"],
+    "Sell": ["FOREIGN_KEY", "FOREIGN_KEY", "FOREIGN_KEY", "TEXT"],
+    "Transactions": ["FOREIGN_KEY", "TEXT", "TEXT", "DATETIME", "TEXT"],
+    "Transportation": ["FOREIGN_KEY", "FOREIGN_KEY", "TEXT", "TEXT"],
+    "TransportationData": ["FOREIGN_KEY", "FOREIGN_KEY", "FOREIGN_KEY", "NUMERIC", "DATETIME"],
+    "AcceptanceData": ["FOREIGN_KEY", "FOREIGN_KEY", "FOREIGN_KEY", "NUMERIC", "DATETIME"],
+    "Acceptance": ["FOREIGN_KEY", "FOREIGN_KEY", "TEXT"],
+    "SellData": ["FOREIGN_KEY", "FOREIGN_KEY", "FOREIGN_KEY", "NUMERIC", "DATETIME"],
+    "WriteOff": ["FOREIGN_KEY", "FOREIGN_KEY", "TEXT"],
+    "WriteOffData": ["FOREIGN_KEY", "FOREIGN_KEY", "FOREIGN_KEY", "NUMERIC", "DATETIME"]}

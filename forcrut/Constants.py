@@ -13,8 +13,8 @@ class Constants:
 	INNER_OPERATIONS = {'relocateGoods': "Переместить\nтовар", 'writeOffGoods': "Списать\nтовар",
 						'acceptGoods': "Принять\nтовар"}
 	OUTER_OPERATIONS = {'sellGoods': "Продать товар"}
-	TEXT, NUMERIC, DATETIME, FOREIGN_KEY = 0, 1, 2, 3
-	TYPES = {0: 'TEXT', 1: 'NUMERIC', 2: 'DATETIME', 3: 'FOREIGN_KEY'}
+	TEXT, NUMERIC, DATETIME, FOREIGN_KEY, BOOL, URL = 0, 1, 2, 3, 4, 5
+	TYPES = {0: 'TEXT', 1: 'NUMERIC', 2: 'DATETIME', 3: 'FOREIGN_KEY', 4:'BOOL', 5:'URL'}
 
 
 # example
