@@ -178,9 +178,9 @@ class Database:
 
     def get_warehouse_goods(self, warehouse_id):
         """
-                Извлекает все товары с определенного склада.
-                :return:
-                """
+        Извлекает все товары с определенного склада.
+        :return:
+        """
         self.cursor.execute("""
             SELECT g.id, g.articul, g.name, g.price, g.ex_time, g.img, gw.count, gw.expire_date
             FROM Goods g
@@ -203,9 +203,9 @@ class Database:
 
     def add_good(self, good):
         """
-               Добавляет новый товар в таблицы Goods и GoodsWarehouse.
-               :return:
-               """
+        Добавляет новый товар в таблицы Goods и GoodsWarehouse.
+        :return:
+        """
         self.cursor.execute("""
             INSERT INTO Goods (articul, name, price, ex_time, img)
             VALUES (?,?,?,?,?)
@@ -214,8 +214,8 @@ class Database:
 
     def add_warehouse(self, warehouse):
         """
-            Добавляет новый склад в таблицы Warehouse и GoodsWarehouse.
-            :return:
+        Добавляет новый склад в таблицы Warehouse и GoodsWarehouse.
+        :return:
         """
         self.cursor.execute("""
             INSERT INTO Warehouse (name, coordinates_a, coordinates_b, adress)
@@ -225,8 +225,8 @@ class Database:
 
     def delete_good(self, good_id):
         """
-            Удаляет товар и связанные с ним данные из таблиц «Goods» и «GoodsWarehouse».
-            :return:
+        Удаляет товар и связанные с ним данные из таблиц «Goods» и «GoodsWarehouse».
+        :return:
         """
         self.cursor.execute("DELETE FROM Goods WHERE id =?", (good_id,))
         self.cursor.execute("DELETE FROM GoodsWarehouse WHERE good_id =?", (good_id,))
@@ -234,16 +234,16 @@ class Database:
 
     def delete_warehouse_good(self, good_id, warehouse_id):
         """
-            Удаляет конкретный товар с определенного склада.
-            :return:
+        Удаляет конкретный товар с определенного склада.
+        :return:
         """
         self.cursor.execute("DELETE FROM GoodsWarehouse WHERE good_id =? AND warehouse_id =?", (good_id, warehouse_id))
         self.conn.commit()
 
     def delete_warehouse(self, warehouse_id):
         """
-            Удаляет склад и связанные с ним данные из таблиц «Warehouse» и «GoodsWarehouse».
-            :return:
+        Удаляет склад и связанные с ним данные из таблиц «Warehouse» и «GoodsWarehouse».
+        :return:
         """
         self.cursor.execute("DELETE FROM Warehouse WHERE id =?", (warehouse_id,))
         self.cursor.execute("DELETE FROM GoodsWarehouse WHERE warehouse_id =?", (warehouse_id,))
@@ -251,8 +251,8 @@ class Database:
 
     def get_admin_params(self, login, password):
         """
-            Получает параметры администратора для данного логина и пароля.
-            :return:
+        Получает параметры администратора для данного логина и пароля.
+        :return:
         """
         self.cursor.execute("SELECT inner, sell, client, redact, super FROM Admin WHERE login =? AND password =?",
                             (login, password))
@@ -264,7 +264,6 @@ class Database:
 
     def close(self):
         self.conn.close()
-
 
 # Пример использования:
 db = Database("../database.db")
