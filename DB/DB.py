@@ -2,10 +2,10 @@ import sqlite3
 from PyQt5 import QtWidgets, QtCore
 from forcrut.Constants import Constants
 
-
 class Database:
-    def __init__(self, db_file):
-        self.conn = sqlite3.connect(db_file)
+    db_file = "database.db"
+    def __init__(self):
+        self.conn = sqlite3.connect(self.db_file)
         self.cursor = self.conn.cursor()
 
     def create_tables(self):
@@ -194,7 +194,6 @@ class Database:
     def get_all_goods(self):
         """
         Извлекает все товары из таблицы «Goods».
-        :return:
         """
         self.cursor.execute("SELECT * FROM Goods")
         rows = self.cursor.fetchall()
@@ -204,10 +203,9 @@ class Database:
     def add_good(self, good):
         """
         Добавляет новый товар в таблицы Goods и GoodsWarehouse.
-        :return:
         """
         self.cursor.execute("""
-            INSERT INTO Goods (articul, name, price, ex_time, img)
+            INSERT OR IGNORE INTO Goods (articul, name, price, ex_time, img)
             VALUES (?,?,?,?,?)
         """, good)
         self.conn.commit()
@@ -215,7 +213,6 @@ class Database:
     def add_warehouse(self, warehouse):
         """
         Добавляет новый склад в таблицы Warehouse и GoodsWarehouse.
-        :return:
         """
         self.cursor.execute("""
             INSERT INTO Warehouse (name, coordinates_a, coordinates_b, adress)
@@ -226,7 +223,6 @@ class Database:
     def delete_good(self, good_id):
         """
         Удаляет товар и связанные с ним данные из таблиц «Goods» и «GoodsWarehouse».
-        :return:
         """
         self.cursor.execute("DELETE FROM Goods WHERE id =?", (good_id,))
         self.cursor.execute("DELETE FROM GoodsWarehouse WHERE good_id =?", (good_id,))
@@ -235,7 +231,6 @@ class Database:
     def delete_warehouse_good(self, good_id, warehouse_id):
         """
         Удаляет конкретный товар с определенного склада.
-        :return:
         """
         self.cursor.execute("DELETE FROM GoodsWarehouse WHERE good_id =? AND warehouse_id =?", (good_id, warehouse_id))
         self.conn.commit()
@@ -243,7 +238,6 @@ class Database:
     def delete_warehouse(self, warehouse_id):
         """
         Удаляет склад и связанные с ним данные из таблиц «Warehouse» и «GoodsWarehouse».
-        :return:
         """
         self.cursor.execute("DELETE FROM Warehouse WHERE id =?", (warehouse_id,))
         self.cursor.execute("DELETE FROM GoodsWarehouse WHERE warehouse_id =?", (warehouse_id,))
@@ -266,14 +260,14 @@ class Database:
         self.conn.close()
 
 # Пример использования:
-# db = Database("../database.db")
+# db = Database()
 # db.create_tables()
-
-# добавление данных
+#
+# # добавление данных
 # db.add_good(("articul1", "name1", 100, "2022-01-01", "img1"))
 # db.add_warehouse(("warehouse1", 1.0, 2.0, "adress1"))
-
-# получение данных
+#
+# # получение данных
 # rows, column_names = db.get_transactions()
 # print(rows, column_names)
 #
@@ -287,7 +281,7 @@ class Database:
 # print(rows, column_names)
 
 # закрытие соединения
-# db.close()
+db.close()
 
 tables = {
     "Goods": ["id", "articul", "name", "price", "ex_time", "img"],
