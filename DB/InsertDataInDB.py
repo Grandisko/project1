@@ -1,5 +1,5 @@
 import random
-from DB.DB import Database
+from DB import Database
 db = Database("../env/database.db")
 db.create_tables()
 
