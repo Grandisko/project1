@@ -5,7 +5,7 @@ db.create_tables()
 
 # Populate Goods table
 goods = []
-for i in range(10):
+for i in range(50):
     articul = f"articul{i}"
     name = f"good{i}"
     price = random.randint(10, 100)
@@ -17,7 +17,7 @@ db.conn.commit()
 
 # Populate Warehouse table
 warehouses = []
-for i in range(5):
+for i in range(50):
     name = f"warehouse{i}"
     coordinates_a = random.random()
     coordinates_b = random.random()
@@ -28,7 +28,7 @@ db.conn.commit()
 
 # Populate GoodsWarehouse table
 goods_warehouse = []
-for i in range(20):
+for i in range(50):
     good_id = random.randint(1, 10)
     warehouse_id = random.randint(1, 5)
     count = random.randint(1, 10)
@@ -39,7 +39,7 @@ db.conn.commit()
 
 # Populate Client table
 clients = []
-for i in range(10):
+for i in range(50):
     Fio = f"client{i}"
     telephone = f"phone{i}"
     type = random.choice([True, False])
@@ -49,7 +49,7 @@ db.conn.commit()
 
 # Populate Admin table
 admins = []
-for i in range(5):
+for i in range(50):
     login = f"admin{i}"
     password = f"password{i}"
     inner = random.choice([True, False])
@@ -63,7 +63,7 @@ db.conn.commit()
 
 # Populate Sell table
 sells = []
-for i in range(10):
+for i in range(50):
     transaction_id = random.randint(1, 10)
     client_id = random.randint(1, 10)
     from_wh = random.randint(1, 5)
@@ -73,7 +73,7 @@ db.conn.commit()
 
 # Populate Transactions table
 transactions = []
-for i in range(10):
+for i in range(50):
     type = random.choice(["sell", "buy"])
     who = random.randint(1, 10)
     time = "2022-01-01"
@@ -84,7 +84,7 @@ db.conn.commit()
 
 # Populate Transportation table
 transportations = []
-for i in range(10):
+for i in range(50):
     transaction_id = random.randint(1, 10)
     from_wh = random.randint(1, 5)
     to_wh = random.randint(1, 5)
@@ -94,7 +94,7 @@ db.conn.commit()
 
 # Populate TransportationData table
 transportation_data = []
-for i in range(20):
+for i in range(50):
     good_id = random.randint(1, 10)
     transportation_id = random.randint(1, 10)
     count = random.randint(1, 10)
@@ -104,7 +104,7 @@ db.cursor.executemany("INSERT INTO TransportationData (good_id, transportation_i
 db.conn.commit()
 
 acceptance_data = []
-for i in range(20):
+for i in range(50):
     good_id = random.randint(1, 10)
     acceptance_id = random.randint(1, 10)
     count = random.randint(1, 10)
@@ -115,7 +115,7 @@ db.conn.commit()
 
 # Populate Acceptance table
 acceptances = []
-for i in range(10):
+for i in range(50):
     transaction_id = random.randint(1, 10)
     to_wh = random.randint(1, 5)
     acceptances.append((transaction_id, to_wh))
@@ -124,7 +124,7 @@ db.conn.commit()
 
 # Populate SellData table
 sell_data = []
-for i in range(20):
+for i in range(50):
     good_id = random.randint(1, 10)
     sell_id = random.randint(1, 10)
     count = random.randint(1, 10)
@@ -135,7 +135,7 @@ db.conn.commit()
 
 # Populate WriteOff table
 write_offs = []
-for i in range(10):
+for i in range(50):
     transaction_id = random.randint(1, 10)
     from_wh = random.randint(1, 5)
     write_offs.append((transaction_id, from_wh))
@@ -144,7 +144,7 @@ db.conn.commit()
 
 # Populate WriteOffData table
 write_off_data = []
-for i in range(20):
+for i in range(50):
     good_id = random.randint(1, 10)
     write_of_id = random.randint(1, 10)
     count = random.randint(1, 10)
