@@ -277,7 +277,7 @@ class Database:
 # print(rows, column_names)
 
 # закрытие соединения
-db.close()
+# db.close()
 
 tables = {
     "Goods": ["id", "articul", "name", "price", "ex_time", "img"],
