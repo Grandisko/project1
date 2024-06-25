@@ -1,6 +1,6 @@
 import random
 from DB import Database
-db = Database("../env/database.db")
+db = Database("database.db")
 db.create_tables()
 
 # Populate Goods table
