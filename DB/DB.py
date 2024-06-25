@@ -266,28 +266,28 @@ class Database:
         self.conn.close()
 
 # Пример использования:
-db = Database("../database.db")
-db.create_tables()
+# db = Database("../database.db")
+# db.create_tables()
 
 # добавление данных
-db.add_good(("articul1", "name1", 100, "2022-01-01", "img1"))
-db.add_warehouse(("warehouse1", 1.0, 2.0, "adress1"))
+# db.add_good(("articul1", "name1", 100, "2022-01-01", "img1"))
+# db.add_warehouse(("warehouse1", 1.0, 2.0, "adress1"))
 
 # получение данных
-rows, column_names = db.get_transactions()
-print(rows, column_names)
-
-rows, column_names = db.get_warehouses()
-print(rows, column_names)
-
-rows, column_names = db.get_warehouse_goods(1)
-print(rows, column_names)
-
-rows, column_names = db.get_all_goods()
-print(rows, column_names)
+# rows, column_names = db.get_transactions()
+# print(rows, column_names)
+#
+# rows, column_names = db.get_warehouses()
+# print(rows, column_names)
+#
+# rows, column_names = db.get_warehouse_goods(1)
+# print(rows, column_names)
+#
+# rows, column_names = db.get_all_goods()
+# print(rows, column_names)
 
 # закрытие соединения
-db.close()
+# db.close()
 
 tables = {
     "Goods": ["id", "articul", "name", "price", "ex_time", "img"],
@@ -306,8 +306,8 @@ tables = {
     "WriteOffData": ["id", "good_id", "write_of_id", "count", "expire_date"]
 }
 tables_types = {
-    "Goods": ["FOREIGN_KEY", "TEXT", "TEXT", "NUMERIC", "DATETIME", "URL"],
-    "GoodsWarehouse": ["FOREIGN_KEY", "FOREIGN_KEY", "FOREIGN_KEY", "NUMERIC", "DATETIME", "DATETIME", "accept_id"],
+    "Goods": ["FOREIGN_KEY", "TEXT", "TEXT", "NUMERIC", "DATETIME", "TEXT"],
+    "GoodsWarehouse": ["FOREIGN_KEY", "FOREIGN_KEY", "FOREIGN_KEY", "NUMERIC", "DATETIME", "DATETIME", "FOREIGN_KEY"],
     "Warehouse": ["FOREIGN_KEY", "TEXT", "NUMERIC", "NUMERIC", "TEXT"],
     "Client": ["FOREIGN_KEY", "TEXT", "NUMERIC", "TEXT"],
     "Admin": ["FOREIGN_KEY", "TEXT", "TEXT", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL"],
