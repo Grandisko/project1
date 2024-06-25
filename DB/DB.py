@@ -306,7 +306,7 @@ tables = {
     "WriteOffData": ["id", "good_id", "write_of_id", "count", "expire_date"]
 }
 tables_types = {
-    "Goods": ["FOREIGN_KEY", "TEXT", "TEXT", "NUMERIC", "DATETIME", "TEXT"],
+    "Goods": [Constants.FOREIGN_KEY, "TEXT", "TEXT", "NUMERIC", "DATETIME", "TEXT"],
     "GoodsWarehouse": ["FOREIGN_KEY", "FOREIGN_KEY", "FOREIGN_KEY", "NUMERIC", "DATETIME", "DATETIME", "FOREIGN_KEY"],
     "Warehouse": ["FOREIGN_KEY", "TEXT", "NUMERIC", "NUMERIC", "TEXT"],
     "Client": ["FOREIGN_KEY", "TEXT", "NUMERIC", "TEXT"],
