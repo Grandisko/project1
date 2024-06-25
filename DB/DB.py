@@ -2,10 +2,10 @@ import sqlite3
 from PyQt5 import QtWidgets, QtCore
 from forcrut.Constants import Constants
 
-
 class Database:
-    def __init__(self, db_file):
-        self.conn = sqlite3.connect(db_file)
+    db_file = "database.db"
+    def __init__(self):
+        self.conn = sqlite3.connect(self.db_file)
         self.cursor = self.conn.cursor()
 
     def create_tables(self):
@@ -159,7 +159,6 @@ class Database:
     def get_transactions(self):
         """
         Извлекает все транзакции из таблицы Transactions.
-        :return:
         """
         self.cursor.execute("SELECT * FROM Transactions")
         rows = self.cursor.fetchall()
@@ -169,7 +168,6 @@ class Database:
     def get_warehouses(self):
         """
         Извлекает все склады из таблицы Warehouse.
-        :return:
         """
         self.cursor.execute("SELECT * FROM Warehouse")
         rows = self.cursor.fetchall()
@@ -179,7 +177,6 @@ class Database:
     def get_warehouse_goods(self, warehouse_id):
         """
         Извлекает все товары с определенного склада.
-        :return:
         """
         self.cursor.execute("""
             SELECT g.id, g.articul, g.name, g.price, g.ex_time, g.img, gw.count, gw.expire_date
@@ -194,7 +191,6 @@ class Database:
     def get_all_goods(self):
         """
         Извлекает все товары из таблицы «Goods».
-        :return:
         """
         self.cursor.execute("SELECT * FROM Goods")
         rows = self.cursor.fetchall()
@@ -204,10 +200,9 @@ class Database:
     def add_good(self, good):
         """
         Добавляет новый товар в таблицы Goods и GoodsWarehouse.
-        :return:
         """
         self.cursor.execute("""
-            INSERT INTO Goods (articul, name, price, ex_time, img)
+            INSERT OR IGNORE INTO Goods (articul, name, price, ex_time, img)
             VALUES (?,?,?,?,?)
         """, good)
         self.conn.commit()
@@ -215,7 +210,6 @@ class Database:
     def add_warehouse(self, warehouse):
         """
         Добавляет новый склад в таблицы Warehouse и GoodsWarehouse.
-        :return:
         """
         self.cursor.execute("""
             INSERT INTO Warehouse (name, coordinates_a, coordinates_b, adress)
@@ -226,7 +220,6 @@ class Database:
     def delete_good(self, good_id):
         """
         Удаляет товар и связанные с ним данные из таблиц «Goods» и «GoodsWarehouse».
-        :return:
         """
         self.cursor.execute("DELETE FROM Goods WHERE id =?", (good_id,))
         self.cursor.execute("DELETE FROM GoodsWarehouse WHERE good_id =?", (good_id,))
@@ -235,7 +228,6 @@ class Database:
     def delete_warehouse_good(self, good_id, warehouse_id):
         """
         Удаляет конкретный товар с определенного склада.
-        :return:
         """
         self.cursor.execute("DELETE FROM GoodsWarehouse WHERE good_id =? AND warehouse_id =?", (good_id, warehouse_id))
         self.conn.commit()
@@ -243,7 +235,6 @@ class Database:
     def delete_warehouse(self, warehouse_id):
         """
         Удаляет склад и связанные с ним данные из таблиц «Warehouse» и «GoodsWarehouse».
-        :return:
         """
         self.cursor.execute("DELETE FROM Warehouse WHERE id =?", (warehouse_id,))
         self.cursor.execute("DELETE FROM GoodsWarehouse WHERE warehouse_id =?", (warehouse_id,))
@@ -252,7 +243,6 @@ class Database:
     def get_admin_params(self, login, password):
         """
         Получает параметры администратора для данного логина и пароля.
-        :return:
         """
         self.cursor.execute("SELECT inner, sell, client, redact, super FROM Admin WHERE login =? AND password =?",
                             (login, password))
@@ -266,14 +256,14 @@ class Database:
         self.conn.close()
 
 # Пример использования:
-# db = Database("../database.db")
+# db = Database()
 # db.create_tables()
-
-# добавление данных
+#
+# # добавление данных
 # db.add_good(("articul1", "name1", 100, "2022-01-01", "img1"))
 # db.add_warehouse(("warehouse1", 1.0, 2.0, "adress1"))
-
-# получение данных
+#
+# # получение данных
 # rows, column_names = db.get_transactions()
 # print(rows, column_names)
 #
