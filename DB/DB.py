@@ -159,7 +159,6 @@ class Database:
     def get_transactions(self):
         """
         Извлекает все транзакции из таблицы Transactions.
-        :return:
         """
         self.cursor.execute("SELECT * FROM Transactions")
         rows = self.cursor.fetchall()
@@ -169,7 +168,6 @@ class Database:
     def get_warehouses(self):
         """
         Извлекает все склады из таблицы Warehouse.
-        :return:
         """
         self.cursor.execute("SELECT * FROM Warehouse")
         rows = self.cursor.fetchall()
@@ -179,7 +177,6 @@ class Database:
     def get_warehouse_goods(self, warehouse_id):
         """
         Извлекает все товары с определенного склада.
-        :return:
         """
         self.cursor.execute("""
             SELECT g.id, g.articul, g.name, g.price, g.ex_time, g.img, gw.count, gw.expire_date
@@ -246,7 +243,6 @@ class Database:
     def get_admin_params(self, login, password):
         """
         Получает параметры администратора для данного логина и пароля.
-        :return:
         """
         self.cursor.execute("SELECT inner, sell, client, redact, super FROM Admin WHERE login =? AND password =?",
                             (login, password))
