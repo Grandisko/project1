@@ -253,7 +253,7 @@ class Database:
     def close(self):
         self.conn.close()
 
-tables = {
+TABLES = {
     "Goods": {
         "id": Constants.PRIMARY_KEY,
         "articul": Constants.TEXT,
