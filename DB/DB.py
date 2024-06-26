@@ -162,6 +162,12 @@ class Database:
         """
         self.cursor.execute("SELECT * FROM Transactions")
         return self.cursor.fetchall()
+    def get_Clients(self):
+        """
+        Извлекает всех клиентов из таблицы Client.
+        """
+        self.cursor.execute("SELECT * FROM Client")
+        return self.cursor.fetchall()
 
     def get_warehouses(self):
         """
@@ -272,7 +278,7 @@ class Database:
 # db.close()
 COLUMNS = {
     "Goods": {
-        "id": Constants.FOREIGN_KEY,
+        "id": Constants.PRIMARY_KEY,
         "articul": Constants.TEXT,
         "name": Constants.TEXT,
         "price": Constants.NUMERIC,
@@ -280,7 +286,7 @@ COLUMNS = {
         "img": Constants.TEXT
     },
     "GoodsWarehouse": {
-        "id": Constants.FOREIGN_KEY,
+        "id": Constants.PRIMARY_KEY,
         "good_id": Constants.FOREIGN_KEY,
         "warehouse_id": Constants.FOREIGN_KEY,
         "count": Constants.NUMERIC,
@@ -289,20 +295,20 @@ COLUMNS = {
         "accept_id": Constants.FOREIGN_KEY
     },
     "Warehouse": {
-        "id": Constants.FOREIGN_KEY,
+        "id": Constants.PRIMARY_KEY,
         "name": Constants.TEXT,
         "coordinates_a": Constants.NUMERIC,
         "coordinates_b": Constants.NUMERIC,
         "adress": Constants.TEXT
     },
     "Client": {
-        "id": Constants.FOREIGN_KEY,
+        "id": Constants.PRIMARY_KEY,
         "Fio": Constants.TEXT,
         "telephone": Constants.TEXT,
         "type": Constants.TEXT
     },
     "Admin": {
-        "id": Constants.FOREIGN_KEY,
+        "id": Constants.PRIMARY_KEY,
         "login": Constants.TEXT,
         "password": Constants.TEXT,
         "inner": Constants.BOOL,
@@ -312,57 +318,57 @@ COLUMNS = {
         "super": Constants.BOOL
     },
     "Sell": {
-        "id": Constants.FOREIGN_KEY,
+        "id": Constants.PRIMARY_KEY,
         "transaction_id": Constants.FOREIGN_KEY,
         "client_id": Constants.FOREIGN_KEY,
         "from_wh": Constants.NUMERIC
     },
     "Transactions": {
-        "id": Constants.FOREIGN_KEY,
+        "id": Constants.PRIMARY_KEY,
         "type": Constants.TEXT,
         "who": Constants.TEXT,
         "time": Constants.DATETIME,
         "PS": Constants.TEXT
     },
     "Transportation": {
-        "id": Constants.FOREIGN_KEY,
+        "id": Constants.PRIMARY_KEY,
         "transaction_id": Constants.FOREIGN_KEY,
         "from_wh": Constants.NUMERIC,
         "to_wh": Constants.NUMERIC
     },
     "TransportationData": {
-        "id": Constants.FOREIGN_KEY,
+        "id": Constants.PRIMARY_KEY,
         "good_id": Constants.FOREIGN_KEY,
         "transportation_id": Constants.FOREIGN_KEY,
         "count": Constants.NUMERIC,
         "expire_date": Constants.DATETIME
     },
     "AcceptanceData": {
-        "id": Constants.FOREIGN_KEY,
+        "id": Constants.PRIMARY_KEY,
         "good_id": Constants.FOREIGN_KEY,
         "acceptance_id": Constants.FOREIGN_KEY,
         "count": Constants.NUMERIC,
         "expire_date": Constants.DATETIME
     },
     "Acceptance": {
-        "id": Constants.FOREIGN_KEY,
+        "id": Constants.PRIMARY_KEY,
         "transaction_id": Constants.FOREIGN_KEY,
         "to_wh": Constants.NUMERIC
     },
     "SellData": {
-        "id": Constants.FOREIGN_KEY,
+        "id": Constants.PRIMARY_KEY,
         "good_id": Constants.FOREIGN_KEY,
         "sell_id": Constants.FOREIGN_KEY,
         "count": Constants.NUMERIC,
         "expire_date": Constants.DATETIME
     },
     "WriteOff": {
-        "id": Constants.FOREIGN_KEY,
+        "id": Constants.PRIMARY_KEY,
         "transaction_id": Constants.FOREIGN_KEY,
         "from_wh": Constants.NUMERIC
     },
     "WriteOffData": {
-        "id": Constants.FOREIGN_KEY,
+        "id": Constants.PRIMARY_KEY,
         "good_id": Constants.FOREIGN_KEY,
         "write_of_id": Constants.FOREIGN_KEY,
         "count": Constants.NUMERIC,
