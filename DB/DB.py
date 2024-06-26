@@ -253,30 +253,7 @@ class Database:
     def close(self):
         self.conn.close()
 
-# Пример использования:
-# db = Database()
-# db.create_tables()
-#
-# # добавление данных
-# db.add_good(("articul1", "name1", 100, "2022-01-01", "img1"))
-# db.add_warehouse(("warehouse1", 1.0, 2.0, "adress1"))
-#
-# # получение данных
-# rows, column_names = db.get_transactions()
-# print(rows, column_names)
-#
-# rows, column_names = db.get_warehouses()
-# print(rows, column_names)
-#
-# rows, column_names = db.get_warehouse_goods(1)
-# print(rows, column_names)
-#
-# rows, column_names = db.get_all_goods()
-# print(rows, column_names)
-
-# закрытие соединения
-# db.close()
-COLUMNS = {
+tables = {
     "Goods": {
         "id": Constants.PRIMARY_KEY,
         "articul": Constants.TEXT,
