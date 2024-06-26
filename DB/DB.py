@@ -321,7 +321,7 @@ COLUMNS = {
         "id": Constants.PRIMARY_KEY,
         "transaction_id": Constants.FOREIGN_KEY,
         "client_id": Constants.FOREIGN_KEY,
-        "from_wh": Constants.NUMERIC
+        "from_wh": Constants.FOREIGN_KEY
     },
     "Transactions": {
         "id": Constants.PRIMARY_KEY,
@@ -333,8 +333,8 @@ COLUMNS = {
     "Transportation": {
         "id": Constants.PRIMARY_KEY,
         "transaction_id": Constants.FOREIGN_KEY,
-        "from_wh": Constants.NUMERIC,
-        "to_wh": Constants.NUMERIC
+        "from_wh": Constants.FOREIGN_KEY,
+        "to_wh": Constants.FOREIGN_KEY
     },
     "TransportationData": {
         "id": Constants.PRIMARY_KEY,
@@ -353,7 +353,7 @@ COLUMNS = {
     "Acceptance": {
         "id": Constants.PRIMARY_KEY,
         "transaction_id": Constants.FOREIGN_KEY,
-        "to_wh": Constants.NUMERIC
+        "to_wh": Constants.FOREIGN_KEY
     },
     "SellData": {
         "id": Constants.PRIMARY_KEY,
@@ -365,7 +365,7 @@ COLUMNS = {
     "WriteOff": {
         "id": Constants.PRIMARY_KEY,
         "transaction_id": Constants.FOREIGN_KEY,
-        "from_wh": Constants.NUMERIC
+        "from_wh": Constants.FOREIGN_KEY
     },
     "WriteOffData": {
         "id": Constants.PRIMARY_KEY,
