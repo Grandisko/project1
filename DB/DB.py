@@ -303,7 +303,7 @@ TABLES = {
     "Transactions": {
         "id": Constants.PRIMARY_KEY,
         "type": Constants.TEXT,
-        "who": Constants.TEXT,
+        "who": Constants.FOREIGN_KEY,
         "time": Constants.DATETIME,
         "PS": Constants.TEXT
     },
