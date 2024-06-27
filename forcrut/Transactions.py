@@ -4,6 +4,7 @@ from Filter import FilterButton, ConditionsWidget
 from typing import Generator
 from functools import cmp_to_key
 import re
+from NewTransaction import OperationWindow
 
 
 # example of data to be filled the table
@@ -15,7 +16,7 @@ def gen_data():
 			[5, ":param clients_edit: does worker have permission to saw/edit clients? #TODO расписать все параметры", 5, "10.05.2024 01:02:03"], [55, ":param clients_edit: does worker have permission to saw/edit clients? #TODO расписать все параметры", 17, "10.11.2024 01:02:03"],
 			[6, ":param clients_edit: does worker have permission to saw/edit clients? #TODO расписать все параметры", 66, "10.06.2024 01:02:03"], [66, ":param clients_edit: does worker have permission to saw/edit clients? #TODO расписать все параметры", 13, "10.12.2024 01:02:03"]]
 
-class Window(QtWidgets.QMainWindow):
+class MainWindow(QtWidgets.QMainWindow):
 	"""
 		Main window with transactions and other functionality
 	"""
@@ -49,9 +50,10 @@ class Window(QtWidgets.QMainWindow):
 		# main layout
 		self.mainLayout = QtWidgets.QGridLayout(self.centralWidget)
 		self.mainLayout.setObjectName("Main-layout")
+		for i in range(2, 5):
+			self.mainLayout.setRowStretch(i, 1)
 		# widget for label and operations' buttons
 		bufferWidget = QtWidgets.QWidget(self.centralWidget)
-		bufferWidget.setGeometry(10, 0, 391, 71)
 		self.mainLayout.addWidget(bufferWidget, 0, 0, QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
 		bufferLayout = QtWidgets.QVBoxLayout(bufferWidget)
 		label = QtWidgets.QLabel('Операции:', bufferWidget)
@@ -61,6 +63,7 @@ class Window(QtWidgets.QMainWindow):
 		self.operationsWidget = QtWidgets.QWidget(bufferWidget)
 		bufferLayout.addWidget(self.operationsWidget)
 		# form operations' buttons
+		self.operations = QtWidgets.QButtonGroup(self.operationsWidget)
 		bufferLayout = QtWidgets.QHBoxLayout(self.operationsWidget)
 		if params.get('inner'):
 			for operation_name, text in Constants.INNER_OPERATIONS.items():
@@ -68,17 +71,19 @@ class Window(QtWidgets.QMainWindow):
 				bufferElem.setObjectName(operation_name)
 				bufferElem.setText(text)
 				bufferElem.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-				bufferElem.clicked.connect(self.__getattribute__(operation_name))
+				# bufferElem.clicked.connect(self.__getattribute__(operation_name))
 				bufferLayout.addWidget(bufferElem)
+				self.operations.addButton(bufferElem, id=Constants.OPERATIONS_TYPES[operation_name])
 		if params.get('sell'):
 			bufferElem = QtWidgets.QPushButton("Продать{}товар".format(' ' if not params.get('inner') else '\n'))
 			bufferElem.setObjectName('sellGoods')
 			bufferElem.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-			bufferElem.clicked.connect(self.sellGoods)
+			# bufferElem.clicked.connect(self.sellGoods)
 			bufferLayout.addWidget(bufferElem)
+			self.operations.addButton(bufferElem, id=Constants.OPERATIONS_TYPES['sellGoods'])
+		self.operations.buttonClicked[int].connect(self.createOperation)
 		# widget for label and views' buttons
 		bufferWidget = QtWidgets.QWidget(self.centralWidget)
-		bufferWidget.setGeometry(570, 0, 311, 101)
 		self.mainLayout.addWidget(bufferWidget, 0, 2, QtCore.Qt.AlignRight | QtCore.Qt.AlignTop)
 		bufferLayout = QtWidgets.QVBoxLayout(bufferWidget)
 		label = QtWidgets.QLabel('Просмотреть:', bufferWidget)
@@ -91,28 +96,28 @@ class Window(QtWidgets.QMainWindow):
 		viewButtonsLayout = QtWidgets.QGridLayout(self.viewButtonsWidget)
 		bufferElem = QtWidgets.QPushButton("Склады и\nтовары")
 		bufferElem.setObjectName("stuffView")
-		bufferElem.clicked.connect(self.stuffView)
+		bufferElem.clicked.connect(lambda: self.openSource("stuffView"))
 		viewButtonsLayout.addWidget(bufferElem, 0, 0)
 		# form template-view button
 		bufferElem = QtWidgets.QPushButton("Шаблон\nдоговора")
 		bufferElem.setObjectName("templateView")
-		bufferElem.clicked.connect(self.templateView)
+		bufferElem.clicked.connect(lambda: self.openSource("templateView"))
 		viewButtonsLayout.addWidget(bufferElem, 0, 1)
 		# form clients-view button if necessary
 		if params.get('clients'):
 			bufferElem = QtWidgets.QPushButton("Клиенты")
 			bufferElem.setObjectName("clientsView")
-			bufferElem.clicked.connect(self.clientsView)
+			bufferElem.clicked.connect(lambda: self.openSource("clientsView"))
 			viewButtonsLayout.addWidget(bufferElem, 1, 0, 1, 2)
 		# form the filter button
 		self.filterButton = FilterButton("Фильтр", self.__columns, parent=self.centralWidget, dataHandler=self.reload)
 		self.filterButton.setObjectName("dataFilter")
 		self.filterButton.setMinimumSize(100, 30)
-		self.mainLayout.setRowMinimumHeight(1, 30)
+		# self.mainLayout.setRowMinimumHeight(1, 30)
 		self.mainLayout.addWidget(self.filterButton, 1, 0, 1, 1, QtCore.Qt.AlignLeft)
 		# form the table
 		self.transactionsView = QtWidgets.QTableWidget(self.centralWidget)
-		self.transactionsView.setGeometry(10, 130, 771, 391)
+		self.transactionsView.setMinimumSize(770, 390)
 		self.transactionsView.setObjectName("transactionsView")
 		self.transactionsView.setSortingEnabled(False)
 		self.transactionsView.setEditTriggers(QtWidgets.QTableWidget.NoEditTriggers)
@@ -141,32 +146,46 @@ class Window(QtWidgets.QMainWindow):
 		for i in range(1, self.transactionsView.rowCount()):
 			yield [self.transactionsView.verticalHeaderItem(i).text()] + [buffer.text() if (buffer:=self.transactionsView.item(i, j)) else None for j in range(len(self.__columns))]
 
-	def relocateGoods(self):
-		pass
+	def createOperation(self, operation_id: int):
+		"""
+			Creates new transaciton with operation
+		"""
 
-	def writeOffGoods(self):
-		pass
+		# clicked button
+		bufferButton = self.operations.button(operation_id)
+		# turn off button
+		bufferButton.setEnabled(False)
+		# new operation window
+		bufferNewOperation = OperationWindow(operation_id, bufferButton.text(), parent=self)
+		# turn on the button after creating will be completed
+		bufferNewOperation.closed.connect(lambda: bufferButton.setEnabled(True))
+		# show the new operation window
+		bufferNewOperation.show()
 
-	def acceptGoods(self):
-		pass
+	# def relocateGoods(self):
+	# 	pass
 
-	def sellGoods(self):
-		pass
+	# def writeOffGoods(self):
+	# 	pass
 
-	def stuffView(self):
-		pass
+	# def acceptGoods(self):
+	# 	pass
 
-	def templateView(self):
-		pass
+	# def sellGoods(self):
+	# 	pass
 
-	def clientsView(self):
-		pass
+	def openSource(self, source_name: str) -> None:
+		"""
+
+		"""
+
+		print(source_name)
 
 	def retranslate(self):
 		"""
 			Possible for introducing another language
 		"""
-		
+
 		pass
 
 	def filterData(self, instructions) -> Generator:
@@ -216,6 +235,8 @@ class Window(QtWidgets.QMainWindow):
 					match instruction['type']:
 						case Constants.NUMERIC:
 							bufferDate1, bufferDate2 = float(row1[index]), float(row2[index])
+						case Constants.FOREIGN_KEY:
+							bufferDate1, bufferDate2 = int(row1[index]), int(row2[index])
 						case Constants.TEXT:
 							bufferDate1, bufferDate2 = row1[index], row2[index]
 						case Constants.DATETIME:
@@ -242,7 +263,7 @@ class Window(QtWidgets.QMainWindow):
 		for row in data:
 			yield row
 
-	def reload(self, instructions: dict|None=None, *args):
+	def reload(self, instructions: dict|None=None):
 		"""
 			Reload data in table by database or filter
 		"""
@@ -253,6 +274,7 @@ class Window(QtWidgets.QMainWindow):
 		# decide get data by database or filter
 		if instructions is None:
 			data = gen_data()
+			# data, _ = get_transactions()
 		else:
 			data = list(self.filterData(instructions))
 		# clear data in table
@@ -274,6 +296,6 @@ class Window(QtWidgets.QMainWindow):
 if __name__ == '__main__':
 	import sys
 	app = QtWidgets.QApplication(sys.argv)
-	window = Window({'inner': False, 'sell': True, 'clients': True})
+	window = MainWindow({'inner': False, 'sell': True, 'clients': True})
 	window.show()
 	sys.exit(app.exec_())

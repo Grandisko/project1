@@ -14,6 +14,7 @@ class Constants:
 	INNER_OPERATIONS = {'relocateGoods': "Переместить\nтовар", 'writeOffGoods': "Списать\nтовар",
 						'acceptGoods': "Принять\nтовар"}
 	OUTER_OPERATIONS = {'sellGoods': "Продать товар"}
+	OPERATIONS_TYPES = {key: value for value, key in enumerate(sorted(INNER_OPERATIONS.keys()|OUTER_OPERATIONS.keys()))}
 	# filter
 	SORTING = 0
 	CONDITIONS_SORTING = 1
@@ -21,7 +22,7 @@ class Constants:
 	DESCENDING = 1
 	# data types
 	TEXT, NUMERIC, DATETIME, FOREIGN_KEY, PRIMARY_KEY, BOOL = 0, 1, 2, 3, 4, 5
-	TYPES = {0: 'TEXT', 1: 'NUMERIC', 2: 'DATETIME', 3: 'FOREIGN_KEY', 4: 'PRIMARY_KEY', 5: 'BOOL'}
+	DATA_TYPES = {0: 'TEXT', 1: 'NUMERIC', 2: 'DATETIME', 3: 'FOREIGN_KEY', 4: 'PRIMARY_KEY', 5: 'BOOL'}
 	# datetime
 	DATETIME_DEFAULT= QtCore.QDateTime(2000, 1, 1, 0, 0)
 	DATETIME_FORMAT = "dd.MM.yyyy HH:mm:ss"
