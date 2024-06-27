@@ -7,7 +7,7 @@ class Database:
     def __init__(self):
         self.conn = sqlite3.connect(self.db_file)
         self.cursor = self.conn.cursor()
-
+# TODO пересмотреть колонки, каскады, тригеры
     def create_tables(self):
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS Goods (
@@ -78,15 +78,16 @@ class Database:
                 type VARCHAR,
                 who INTEGER,
                 time DATETIME,
-                PS TEXT
+                PS TEXT,
+                FOREIGN KEY
             )
         """)
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS Transportation (
                 id INTEGER PRIMARY KEY,
                 transaction_id INTEGER,
-                from_wh INTEGER,
-                to_wh INTEGER,
+                from_wh_id INTEGER,
+                to_wh_id INTEGER,
                 FOREIGN KEY (transaction_id) REFERENCES Transactions(id),
                 FOREIGN KEY (from_wh) REFERENCES Warehouse(id),
                 FOREIGN KEY (to_wh) REFERENCES Warehouse(id)
@@ -242,13 +243,13 @@ class Database:
         """
         Получает параметры администратора для данного логина и пароля.
         """
-        self.cursor.execute("SELECT inner, sell, client, redact, super FROM Admin WHERE login =? AND password =?",
+        self.cursor.execute("SELECT id, inner, sell, client, redact, super FROM Admin WHERE login =? AND password =?",
                             (login, password))
         row = self.cursor.fetchone()
         if row:
-            return {'inner': row[0], 'sell': row[1], 'client': row[2], 'redact': row[3], 'super': row[4]}
+            return True, row[0]  # return flag=True and admin_id
         else:
-            return None
+            return False, None  # return flag=False and None
 
     def close(self):
         self.conn.close()
