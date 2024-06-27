@@ -7,7 +7,7 @@ class Database:
     def __init__(self):
         self.conn = sqlite3.connect(self.db_file)
         self.cursor = self.conn.cursor()
-
+# TODO пересмотреть колонки, каскады, тригеры
     def create_tables(self):
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS Goods (
@@ -78,15 +78,16 @@ class Database:
                 type VARCHAR,
                 who INTEGER,
                 time DATETIME,
-                PS TEXT
+                PS TEXT,
+                FOREIGN KEY
             )
         """)
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS Transportation (
                 id INTEGER PRIMARY KEY,
                 transaction_id INTEGER,
-                from_wh INTEGER,
-                to_wh INTEGER,
+                from_wh_id INTEGER,
+                to_wh_id INTEGER,
                 FOREIGN KEY (transaction_id) REFERENCES Transactions(id),
                 FOREIGN KEY (from_wh) REFERENCES Warehouse(id),
                 FOREIGN KEY (to_wh) REFERENCES Warehouse(id)
@@ -161,18 +162,20 @@ class Database:
         Извлекает все транзакции из таблицы Transactions.
         """
         self.cursor.execute("SELECT * FROM Transactions")
-        rows = self.cursor.fetchall()
-        column_names = [desc[0] for desc in self.cursor.description]
-        return rows, column_names
+        return self.cursor.fetchall()
+    def get_Clients(self):
+        """
+        Извлекает всех клиентов из таблицы Client.
+        """
+        self.cursor.execute("SELECT * FROM Client")
+        return self.cursor.fetchall()
 
     def get_warehouses(self):
         """
         Извлекает все склады из таблицы Warehouse.
         """
         self.cursor.execute("SELECT * FROM Warehouse")
-        rows = self.cursor.fetchall()
-        column_names = [desc[0] for desc in self.cursor.description]
-        return rows, column_names
+        return self.cursor.fetchall()
 
     def get_warehouse_goods(self, warehouse_id):
         """
@@ -184,18 +187,14 @@ class Database:
             JOIN GoodsWarehouse gw ON g.id = gw.good_id
             WHERE gw.warehouse_id =?
         """, (warehouse_id,))
-        rows = self.cursor.fetchall()
-        column_names = [desc[0] for desc in self.cursor.description]
-        return rows, column_names
+        return self.cursor.fetchall()
 
     def get_all_goods(self):
         """
         Извлекает все товары из таблицы «Goods».
         """
         self.cursor.execute("SELECT * FROM Goods")
-        rows = self.cursor.fetchall()
-        column_names = [desc[0] for desc in self.cursor.description]
-        return rows, column_names
+        return self.cursor.fetchall()
 
     def add_good(self, good):
         """
@@ -212,7 +211,7 @@ class Database:
         Добавляет новый склад в таблицы Warehouse и GoodsWarehouse.
         """
         self.cursor.execute("""
-            INSERT INTO Warehouse (name, coordinates_a, coordinates_b, adress)
+            INSERT OR IGNORE INTO Warehouse (name, coordinates_a, coordinates_b, adress)
             VALUES (?,?,?,?)
         """, warehouse)
         self.conn.commit()
@@ -244,69 +243,113 @@ class Database:
         """
         Получает параметры администратора для данного логина и пароля.
         """
-        self.cursor.execute("SELECT inner, sell, client, redact, super FROM Admin WHERE login =? AND password =?",
+        self.cursor.execute("SELECT id, inner, sell, client, redact, super FROM Admin WHERE login =? AND password =?",
                             (login, password))
         row = self.cursor.fetchone()
         if row:
-            return {'inner': row[0], 'ell': row[1], 'client': row[2], 'edact': row[3], 'uper': row[4]}
+            return True, row[0]  # return flag=True and admin_id
         else:
-            return None
+            return False, None  # return flag=False and None
 
     def close(self):
         self.conn.close()
 
-# Пример использования:
-# db = Database()
-# db.create_tables()
-#
-# # добавление данных
-# db.add_good(("articul1", "name1", 100, "2022-01-01", "img1"))
-# db.add_warehouse(("warehouse1", 1.0, 2.0, "adress1"))
-#
-# # получение данных
-# rows, column_names = db.get_transactions()
-# print(rows, column_names)
-#
-# rows, column_names = db.get_warehouses()
-# print(rows, column_names)
-#
-# rows, column_names = db.get_warehouse_goods(1)
-# print(rows, column_names)
-#
-# rows, column_names = db.get_all_goods()
-# print(rows, column_names)
-
-# закрытие соединения
-# db.close()
-
-tables = {
-    "Goods": ["id", "articul", "name", "price", "ex_time", "img"],
-    "GoodsWarehouse": ["id", "good_id", "warehouse_id", "count", "expire_date", "accept_date", "accept_id"],
-    "Warehouse": ["id", "name", "coordinates_a", "coordinates_b", "adress"],
-    "Client": ["id", "Fio", "telephone", "type"],
-    "Admin": ["id", "login", "password", "inner", "sell", "client", "redact", "super"],
-    "Sell": ["id", "transaction_id", "client_id", "from_wh"],
-    "Transactions": ["id", "type", "who", "time", "PS"],
-    "Transportation": ["id", "transaction_id", "from_wh", "to_wh"],
-    "TransportationData": ["id", "good_id", "transportation_id", "count", "expire_date"],
-    "AcceptanceData": ["id", "good_id", "acceptance_id", "count", "expire_date"],
-    "Acceptance": ["id", "transaction_id", "to_wh"],
-    "SellData": ["id", "good_id", "sell_id", "count", "expire_date"],
-    "WriteOff": ["id", "transaction_id", "from_wh"],
-    "WriteOffData": ["id", "good_id", "write_of_id", "count", "expire_date"]
+TABLES = {
+    "Goods": {
+        "id": Constants.PRIMARY_KEY,
+        "articul": Constants.TEXT,
+        "name": Constants.TEXT,
+        "price": Constants.NUMERIC,
+        "ex_time": Constants.DATETIME,
+        "img": Constants.TEXT
+    },
+    "GoodsWarehouse": {
+        "id": Constants.PRIMARY_KEY,
+        "good_id": Constants.FOREIGN_KEY,
+        "warehouse_id": Constants.FOREIGN_KEY,
+        "count": Constants.NUMERIC,
+        "expire_date": Constants.DATETIME,
+        "accept_date": Constants.DATETIME,
+        "accept_id": Constants.FOREIGN_KEY
+    },
+    "Warehouse": {
+        "id": Constants.PRIMARY_KEY,
+        "name": Constants.TEXT,
+        "coordinates_a": Constants.NUMERIC,
+        "coordinates_b": Constants.NUMERIC,
+        "adress": Constants.TEXT
+    },
+    "Client": {
+        "id": Constants.PRIMARY_KEY,
+        "Fio": Constants.TEXT,
+        "telephone": Constants.TEXT,
+        "type": Constants.TEXT
+    },
+    "Admin": {
+        "id": Constants.PRIMARY_KEY,
+        "login": Constants.TEXT,
+        "password": Constants.TEXT,
+        "inner": Constants.BOOL,
+        "sell": Constants.BOOL,
+        "client": Constants.BOOL,
+        "redact": Constants.BOOL,
+        "super": Constants.BOOL
+    },
+    "Sell": {
+        "id": Constants.PRIMARY_KEY,
+        "transaction_id": Constants.FOREIGN_KEY,
+        "client_id": Constants.FOREIGN_KEY,
+        "from_wh": Constants.FOREIGN_KEY
+    },
+    "Transactions": {
+        "id": Constants.PRIMARY_KEY,
+        "type": Constants.TEXT,
+        "who": Constants.FOREIGN_KEY,
+        "time": Constants.DATETIME,
+        "PS": Constants.TEXT
+    },
+    "Transportation": {
+        "id": Constants.PRIMARY_KEY,
+        "transaction_id": Constants.FOREIGN_KEY,
+        "from_wh": Constants.FOREIGN_KEY,
+        "to_wh": Constants.FOREIGN_KEY
+    },
+    "TransportationData": {
+        "id": Constants.PRIMARY_KEY,
+        "good_id": Constants.FOREIGN_KEY,
+        "transportation_id": Constants.FOREIGN_KEY,
+        "count": Constants.NUMERIC,
+        "expire_date": Constants.DATETIME
+    },
+    "AcceptanceData": {
+        "id": Constants.PRIMARY_KEY,
+        "good_id": Constants.FOREIGN_KEY,
+        "acceptance_id": Constants.FOREIGN_KEY,
+        "count": Constants.NUMERIC,
+        "expire_date": Constants.DATETIME
+    },
+    "Acceptance": {
+        "id": Constants.PRIMARY_KEY,
+        "transaction_id": Constants.FOREIGN_KEY,
+        "to_wh": Constants.FOREIGN_KEY
+    },
+    "SellData": {
+        "id": Constants.PRIMARY_KEY,
+        "good_id": Constants.FOREIGN_KEY,
+        "sell_id": Constants.FOREIGN_KEY,
+        "count": Constants.NUMERIC,
+        "expire_date": Constants.DATETIME
+    },
+    "WriteOff": {
+        "id": Constants.PRIMARY_KEY,
+        "transaction_id": Constants.FOREIGN_KEY,
+        "from_wh": Constants.FOREIGN_KEY
+    },
+    "WriteOffData": {
+        "id": Constants.PRIMARY_KEY,
+        "good_id": Constants.FOREIGN_KEY,
+        "write_of_id": Constants.FOREIGN_KEY,
+        "count": Constants.NUMERIC,
+        "expire_date": Constants.DATETIME
+    }
 }
-tables_types = {
-    "Goods": [Constants.FOREIGN_KEY, "TEXT", "TEXT", "NUMERIC", "DATETIME", "TEXT"],
-    "GoodsWarehouse": ["FOREIGN_KEY", "FOREIGN_KEY", "FOREIGN_KEY", "NUMERIC", "DATETIME", "DATETIME", "FOREIGN_KEY"],
-    "Warehouse": ["FOREIGN_KEY", "TEXT", "NUMERIC", "NUMERIC", "TEXT"],
-    "Client": ["FOREIGN_KEY", "TEXT", "NUMERIC", "TEXT"],
-    "Admin": ["FOREIGN_KEY", "TEXT", "TEXT", "BOOL", "BOOL", "BOOL", "BOOL", "BOOL"],
-    "Sell": ["FOREIGN_KEY", "FOREIGN_KEY", "FOREIGN_KEY", "TEXT"],
-    "Transactions": ["FOREIGN_KEY", "TEXT", "TEXT", "DATETIME", "TEXT"],
-    "Transportation": ["FOREIGN_KEY", "FOREIGN_KEY", "TEXT", "TEXT"],
-    "TransportationData": ["FOREIGN_KEY", "FOREIGN_KEY", "FOREIGN_KEY", "NUMERIC", "DATETIME"],
-    "AcceptanceData": ["FOREIGN_KEY", "FOREIGN_KEY", "FOREIGN_KEY", "NUMERIC", "DATETIME"],
-    "Acceptance": ["FOREIGN_KEY", "FOREIGN_KEY", "TEXT"],
-    "SellData": ["FOREIGN_KEY", "FOREIGN_KEY", "FOREIGN_KEY", "NUMERIC", "DATETIME"],
-    "WriteOff": ["FOREIGN_KEY", "FOREIGN_KEY", "TEXT"],
-    "WriteOffData": ["FOREIGN_KEY", "FOREIGN_KEY", "FOREIGN_KEY", "NUMERIC", "DATETIME"]}
