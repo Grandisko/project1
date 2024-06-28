@@ -1,6 +1,7 @@
 from PyQt5 import QtWidgets, QtCore
-from Constants import centerWidget, Constants, COLUMNS
-from Transactions import MainWindow as Transactions
+from .Constants import centerWidget, Constants
+from .Transactions import MainWindow as Transactions
+from DB.DB import TABLES
 
 
 def LogIn(login: str, password: str) -> dict | None:
@@ -82,7 +83,9 @@ class AuthorizationWindow(QtWidgets.QDialog):
 			self.passwordInput.clear()
 			self.warning.setText("<b style='color: red'>Введенный логин или пароль не привязан ни к какому аккаунту. Введите правильные данные.</b>")
 			return
-		self.window = Transactions(response, COLUMNS)
+		bufferColumns = TABLES['Transactions']
+		bufferColumns.pop('id')
+		self.window = Transactions(response.pop('id'), response, bufferColumns)
 		self.close()
 		self.window.show()
 

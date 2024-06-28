@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
-from Constants import centerWidget, Constants, COLUMNS
+from .Constants import centerWidget, Constants
 from functools import partial
 from typing import Callable, Any
 
@@ -46,7 +46,7 @@ class FilterButton(QtWidgets.QToolButton):
 		"""
 
 		if self.sortingWidget is None:
-			self.sortingWidget = SortingWidget(list(self.__columns.keys()), parent=self)
+			self.sortingWidget = SortingWidget(self.__columns, parent=self)
 			self.sortingWidget.closed.connect(lambda: setattr(self, 'sortingWidget', None))
 			self.sortingWidget.toFilter.connect(self.handler)
 			self.sortingWidget.show()
@@ -73,7 +73,7 @@ class AbstractFilterWidget(QtWidgets.QDialog):
 	closed = QtCore.pyqtSignal()
 	toFilter = QtCore.pyqtSignal(dict)
 
-	def __init__(self, columns: dict | list, title: str="Параметры фильтра", parent: QtCore.QObject|None=None) -> None:
+	def __init__(self, columns: dict, title: str="Параметры фильтра", parent: QtCore.QObject|None=None) -> None:
 		"""
 			:param columns: dict of keys (columns' names) and values (their data types)
 				Example, {'information': TEXT},
@@ -129,7 +129,7 @@ class SortingWidget(AbstractFilterWidget):
 		Widget with sorting settings
 	"""
 
-	def __init__(self, columns: list, parent: QtCore.QObject|None=None) -> None:
+	def __init__(self, columns: dict, parent: QtCore.QObject|None=None) -> None:
 		"""
 			:param columns: dict of keys (columns' names) and values (their data types)
 				Example, {'information': TEXT},
@@ -201,10 +201,10 @@ class SortingWidget(AbstractFilterWidget):
 			Handler Ok button, which forms instructions
 		"""
 
-		for (column, columnType), [sortOrder, inputs] in zip(COLUMNS.items(), self.options):
+		for (column, columnType), [sortOrder, inputs] in zip(self.get_columns().items(), self.options):
 			instruction = inputs.checkedId()
 			if instruction != -1:
-				self.instructions[column] = {'order': sortOrder.value(), 'id': self.get_columns().index(column), 
+				self.instructions[column] = {'order': sortOrder.value(), 'id': list(self.get_columns().keys()).index(column), 
 											 'option': Constants.ASCENDING if instruction == 0 else Constants.DESCENDING, 
 											 'type': columnType}
 
@@ -292,8 +292,7 @@ class ConditionsWidget(AbstractFilterWidget):
 		"""
 			Handler Ok button, which forms instructions
 		"""
-
-		for (column, columnType), inputs in zip(COLUMNS.items(), self.options):
+		for (column, columnType), inputs in zip(self.get_columns().items(), self.options):
 			instructions = []
 			match columnType:
 				case Constants.NUMERIC:

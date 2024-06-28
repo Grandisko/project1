@@ -3,7 +3,7 @@ from PyQt5 import QtWidgets, QtCore
 from forcrut.Constants import Constants
 
 class Database:
-    db_file = "database.db"
+    db_file = Constants.DATABASE_PATH
     def __init__(self):
         self.conn = sqlite3.connect(self.db_file)
         self.cursor = self.conn.cursor()
