@@ -80,7 +80,7 @@ class Database:
                 who INTEGER,
                 time DATETIME,
                 PS TEXT,
-                FOREIGN KEY
+                FOREIGN KEY (who) REFERENCES Admin(id)
             )
         """)
         self.cursor.execute("""
