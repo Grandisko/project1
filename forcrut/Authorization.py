@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtCore
 from .Constants import centerWidget, Constants
 from .Transactions import MainWindow as Transactions
-from DB.DB import TABLES
+from DB.DB import TABLES, Database
 
 
 def LogIn(login: str, password: str) -> dict | None:
@@ -23,6 +23,8 @@ class AuthorizationWindow(QtWidgets.QDialog):
 		# QDialog settings
 		self.setWindowTitle("Вход в систему")
 		self.setGeometry(*centerWidget(400, 300))
+		# database
+		self.__db = Database()
 		# widget for a 'log in' field
 		self.mainLayout = QtWidgets.QVBoxLayout(self)
 		self.viewButtonsWidget = QtWidgets.QWidget(self)
@@ -78,14 +80,14 @@ class AuthorizationWindow(QtWidgets.QDialog):
 			Confirm the received login and password
 		"""
 
-		response = LogIn(self.loginInput.text(), self.passwordInput.text())
+		response = self.__db.get_admin_params(self.loginInput.text(), self.passwordInput.text())
 		if response is None:
 			self.passwordInput.clear()
 			self.warning.setText("<b style='color: red'>Введенный логин или пароль не привязан ни к какому аккаунту. Введите правильные данные.</b>")
 			return
 		bufferColumns = TABLES['Transactions']
 		bufferColumns.pop('id')
-		self.window = Transactions(response.pop('id'), response, bufferColumns)
+		self.window = Transactions(response.pop('id'), response, bufferColumns, db=self.__db)
 		self.close()
 		self.window.show()
 
