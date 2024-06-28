@@ -164,7 +164,8 @@ class Database:
         """
         self.cursor.execute("SELECT * FROM Transactions")
         return self.cursor.fetchall()
-    def get_Clients(self):
+
+    def get_clients(self):
         """
         Извлекает всех клиентов из таблицы Client.
         """
