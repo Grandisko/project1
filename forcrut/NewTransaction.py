@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from Constants import centerWidget, Constants
-from Filter import FilterButton
+from .Constants import centerWidget, Constants
+from .Filter import FilterButton
 
 
 class OperationWindow(QtWidgets.QDialog):
@@ -11,10 +11,11 @@ class OperationWindow(QtWidgets.QDialog):
 	closed = QtCore.pyqtSignal()
 	# newTransaction = QtCore.pyqtSignal()  # TODO нужен ли он вообще
 
-	def __init__(self, operation_id: int, operation_name: str, parent: QtCore.QObject) -> None:
+	def __init__(self, operation_id: int, operation_name: str, user: int, parent: QtCore.QObject|None=None) -> None:
 		"""
 			:param operation_id: operation id from OPERATIONS_TYPES,
 			:param operation_name: operation name,
+			:param user: user's id in database,
 			:param parent: parent QObject for widget
 		"""
 		
@@ -34,7 +35,6 @@ class OperationWindow(QtWidgets.QDialog):
 		#
 		bufferWidget = QtWidgets.QWidget(self)
 		self.mainLayout.addWidget(bufferWidget, 0, 0, 1, 2)
-		# self.mainLayout.setRowMinimumHeight(0, 70)
 		bufferLayout = QtWidgets.QVBoxLayout(bufferWidget)
 		#
 		bufferLayout.addWidget(bufferLabel:=QtWidgets.QLabel('Операция', bufferWidget))
@@ -43,7 +43,6 @@ class OperationWindow(QtWidgets.QDialog):
 		self.operationInfo = QtWidgets.QPlainTextEdit(self)
 		self.operationInfo.setObjectName("operationInfo")
 		self.operationInfo.setPlainText(f"Операция: {self.__operation['type']}\n")
-		# self.operationInfo.setMaximumSize(500, 70)
 		self.operationInfo.setReadOnly(True)
 		palette = self.operationInfo.palette()
 		palette.setColor(QtGui.QPalette.Highlight, palette.color(QtGui.QPalette.Base))
@@ -67,7 +66,6 @@ class OperationWindow(QtWidgets.QDialog):
 		self.filterButton = FilterButton("Фильтр", [], parent=self, dataHandler=self.reload)
 		self.filterButton.setObjectName("dataFilter")
 		self.filterButton.setMinimumSize(100, 30)
-		# self.mainLayout.setRowMinimumHeight(1, 30)
 		self.mainLayout.addWidget(self.filterButton, 1, 0, 1, 1, QtCore.Qt.AlignLeft)
 		# form the first table
 		self.field1 = QtWidgets.QTableWidget(self)

@@ -1,10 +1,11 @@
 from PyQt5 import QtWidgets, QtCore
-from Constants import centerWidget, Constants
-from Filter import FilterButton, ConditionsWidget
+from .Constants import centerWidget, Constants
+from .Filter import FilterButton, ConditionsWidget
 from typing import Generator
 from functools import cmp_to_key
 import re
-from NewTransaction import OperationWindow
+from .NewTransaction import OperationWindow
+from DB.DB import Database
 
 
 # example of data to be filled the table
@@ -21,8 +22,9 @@ class MainWindow(QtWidgets.QMainWindow):
 		Main window with transactions and other functionality
 	"""
 
-	def __init__(self, params: dict, columns: dict) -> None:
+	def __init__(self, user: int, params: dict, columns: dict) -> None:
 		"""
+			:param user: user's id in database,
 			:param params: dict of keys and boolean values
 				inner: permission for INNER_OPERATIONS,
 				outer: permission for OUTER_OPERATIONS,
@@ -31,7 +33,7 @@ class MainWindow(QtWidgets.QMainWindow):
 				super: super-user;
 
 			:param columns: dict of keys (columns' names) and values (their data types)
-				Example, {'information': TEXT}.
+				Example, {'information': TEXT}
 		"""
 
 		# QMainWindow init
@@ -40,9 +42,11 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.setWindowTitle("Транзакции")
 		self.setGeometry(*centerWidget(800, 600))
 		# required fields
+		self.__user = user
 		self.__columns = columns
 		self.super = params.get('super')
 		self.redact = params.get('redact')
+		self.__db = Database()
 		# central widget settings
 		self.centralWidget = QtWidgets.QWidget(self)
 		self.centralWidget.setObjectName("MainContainer")
@@ -156,7 +160,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		# turn off button
 		bufferButton.setEnabled(False)
 		# new operation window
-		bufferNewOperation = OperationWindow(operation_id, bufferButton.text(), parent=self)
+		bufferNewOperation = OperationWindow(operation_id, bufferButton.text(), parent=self, user=self.__user)
 		# turn on the button after creating will be completed
 		bufferNewOperation.closed.connect(lambda: bufferButton.setEnabled(True))
 		# show the new operation window
@@ -273,7 +277,8 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.transactionsView.setHorizontalHeaderLabels(self.__columns.keys())
 		# decide get data by database or filter
 		if instructions is None:
-			data = gen_data()
+			# data = gen_data()
+			data = self.__db.get_transactions()
 			# data, _ = get_transactions()
 		else:
 			data = list(self.filterData(instructions))
