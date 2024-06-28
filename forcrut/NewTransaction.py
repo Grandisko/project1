@@ -1,6 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from .Constants import centerWidget, Constants
 from .Filter import FilterButton
+from DB.DB import Database
 
 
 class OperationWindow(QtWidgets.QDialog):
@@ -11,12 +12,13 @@ class OperationWindow(QtWidgets.QDialog):
 	closed = QtCore.pyqtSignal()
 	# newTransaction = QtCore.pyqtSignal()  # TODO нужен ли он вообще
 
-	def __init__(self, operation_id: int, operation_name: str, user: int, parent: QtCore.QObject|None=None) -> None:
+	def __init__(self, operation_id: int, operation_name: str, user: int, db: Database, parent: QtCore.QObject|None=None) -> None:
 		"""
 			:param operation_id: operation id from OPERATIONS_TYPES,
 			:param operation_name: operation name,
 			:param user: user's id in database,
-			:param parent: parent QObject for widget
+			:param parent: parent QObject for widget,
+			:param db: Database of the app
 		"""
 		
 		# QDialog init
@@ -28,6 +30,7 @@ class OperationWindow(QtWidgets.QDialog):
 		self.__operation = dict.fromkeys(['type', 'field1', 'field2'])
 		self.__operation['type'] = ' '.join(operation_name.lower().split())
 		self.__buffer = None
+		self.__id = db
 		# main layout
 		self.mainLayout = QtWidgets.QGridLayout(self)
 		for i in range(8):

@@ -22,7 +22,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		Main window with transactions and other functionality
 	"""
 
-	def __init__(self, user: int, params: dict, columns: dict) -> None:
+	def __init__(self, user: int, params: dict, columns: dict, db: Database) -> None:
 		"""
 			:param user: user's id in database,
 			:param params: dict of keys and boolean values
@@ -31,9 +31,9 @@ class MainWindow(QtWidgets.QMainWindow):
 				clients: permission to saw/edit clients,
 				redact: permission to edit information,
 				super: super-user;
-
 			:param columns: dict of keys (columns' names) and values (their data types)
-				Example, {'information': TEXT}
+				Example, {'information': TEXT},
+			:param db: Database of the app
 		"""
 
 		# QMainWindow init
@@ -46,7 +46,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.__columns = columns
 		self.super = params.get('super')
 		self.redact = params.get('redact')
-		self.__db = Database()
+		self.__db = db
 		# central widget settings
 		self.centralWidget = QtWidgets.QWidget(self)
 		self.centralWidget.setObjectName("MainContainer")
@@ -160,7 +160,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		# turn off button
 		bufferButton.setEnabled(False)
 		# new operation window
-		bufferNewOperation = OperationWindow(operation_id, bufferButton.text(), parent=self, user=self.__user)
+		bufferNewOperation = OperationWindow(operation_id, bufferButton.text(), parent=self, user=self.__user, db=self.__db)
 		# turn on the button after creating will be completed
 		bufferNewOperation.closed.connect(lambda: bufferButton.setEnabled(True))
 		# show the new operation window
