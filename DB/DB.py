@@ -9,6 +9,7 @@ class Database:
         self.conn = sqlite3.connect(self.db_file)
         self.cursor = self.conn.cursor()
 # TODO пересмотреть колонки, каскады, тригеры
+    # ex_time только дни и к ним прибавляем время транзакции
     def create_tables(self):
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS Goods (
@@ -16,7 +17,7 @@ class Database:
                 articul VARCHAR,
                 name VARCHAR,
                 price INTEGER,
-                ex_time DATETIME,
+                ex_time DATETIME, 
                 img VARCHAR
             )
         """)
@@ -164,7 +165,6 @@ class Database:
         """
         self.cursor.execute("SELECT * FROM Transactions")
         return self.cursor.fetchall()
-
     def get_clients(self):
         """
         Извлекает всех клиентов из таблицы Client.
