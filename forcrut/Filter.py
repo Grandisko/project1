@@ -10,7 +10,7 @@ class FilterButton(QtWidgets.QToolButton):
 		Example:
 			filterButton = FilterButton("Фильтр", columns, dataHandler=self.reload, parent=self.centralWidget)
 			filterButton.setObjectName("dataFilter")
-			filterButton.setGeometry(10, 90, 101, 31)
+			...
 	"""
 
 	def __init__(self, text: str, columns: dict, parent: QtCore.QObject | None=None, dataHandler: Callable[[QtCore.QObject, dict], tuple[Any, ...]] | None=None) -> None:
@@ -27,7 +27,7 @@ class FilterButton(QtWidgets.QToolButton):
 		self.__columns = columns
 		self.sortingWidget = None
 		self.conditionsWidget = None
-		self.handler = (lambda: None) if dataHandler is None else dataHandler  # TODO check
+		self.handler = (lambda: None) if dataHandler is None else dataHandler
 		# QToolButton settings
 		self.setText(text)
 		if not parent is None:
@@ -121,7 +121,7 @@ class AbstractFilterWidget(QtWidgets.QDialog):
 
 		self.closed.emit()
 		self.instructions = {}
-		self.close()
+		super().closeEvent(event)
 
 
 class SortingWidget(AbstractFilterWidget):
@@ -248,12 +248,12 @@ class ConditionsWidget(AbstractFilterWidget):
 			bufferElem = QtWidgets.QLabel(column, parent=self.gridWidget)
 			bufferElem.setWordWrap(True)
 			self.gridLayout.addWidget(bufferElem, i, 0, QtCore.Qt.AlignCenter)
-			bufferElem = QtWidgets.QLabel(Constants.TYPES[columnType], parent=self.gridWidget)
+			bufferElem = QtWidgets.QLabel(Constants.DATA_TYPES[columnType], parent=self.gridWidget)
 			self.gridLayout.addWidget(bufferElem, i, 1, QtCore.Qt.AlignCenter)
 			# special filling according to the type of data
 			match columnType:
-				case Constants.NUMERIC | Constants.TEXT:
-					for j, labelName in zip([2, 3], ['Нижняя граница', 'Верхняя граница'] if columnType == Constants.NUMERIC else ['Поиск по значению', 'Поиск по регулярке']):
+				case Constants.NUMERIC | Constants.TEXT | Constants.FOREIGN_KEY:
+					for j, labelName in zip([2, 3], ['Нижняя граница', 'Верхняя граница'] if columnType in [Constants.NUMERIC, Constants.FOREIGN_KEY] else ['Поиск по значению', 'Поиск по регулярке']):
 						optionWidget = QtWidgets.QWidget(self.gridWidget)
 						layout = QtWidgets.QVBoxLayout(optionWidget)
 						layout.addWidget(label:=QtWidgets.QLabel(labelName, parent=optionWidget))
@@ -267,6 +267,9 @@ class ConditionsWidget(AbstractFilterWidget):
 						if columnType == Constants.NUMERIC:
 							inputLine.setValidator(validator:=QtGui.QRegularExpressionValidator(optionWidget))
 							validator.setRegularExpression(QtCore.QRegularExpression(r'^[+-]?(\d*\.?\d+)|(\d+)$'))
+						elif columnType == Constants.FOREIGN_KEY:
+							inputLine.setValidator(validator:=QtGui.QRegularExpressionValidator(optionWidget))
+							validator.setRegularExpression(QtCore.QRegularExpression(r'^\d+$'))
 
 						self.gridLayout.addWidget(optionWidget, i, j, QtCore.Qt.AlignCenter)
 				case Constants.DATETIME:
@@ -295,6 +298,8 @@ class ConditionsWidget(AbstractFilterWidget):
 			match columnType:
 				case Constants.NUMERIC:
 					instructions = [float(buffer) if (buffer:=input_.text().strip()) and input_.hasAcceptableInput() else None for input_ in inputs]
+				case Constants.FOREIGN_KEY:
+					instructions = [int(buffer) if (buffer:=input_.text().strip()) and input_.hasAcceptableInput() else None for input_ in inputs]
 				case Constants.TEXT:
 					instructions = [buffer if (buffer:=input_.text().strip()) else None for input_ in inputs]
 				case Constants.DATETIME:
