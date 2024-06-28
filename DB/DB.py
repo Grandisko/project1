@@ -1,6 +1,7 @@
 import sqlite3
 from PyQt5 import QtWidgets, QtCore
 from forcrut.Constants import Constants
+import datetime
 
 class Database:
     db_file = Constants.DATABASE_PATH
@@ -79,7 +80,7 @@ class Database:
                 who INTEGER,
                 time DATETIME,
                 PS TEXT,
-                FOREIGN KEY
+                FOREIGN KEY (who) REFERENCES Admin(id)
             )
         """)
         self.cursor.execute("""
