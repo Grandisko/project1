@@ -247,9 +247,16 @@ class Database:
                             (login, password))
         row = self.cursor.fetchone()
         if row:
-            return True, row[0]  # return flag=True and admin_id
+            return {
+                'id': row[0],
+                'inner': row[1],
+                'sell': row[2],
+                'client': row[3],
+                'redact': row[4],
+                'super': row[5]
+            }
         else:
-            return False, None  # return flag=False and None
+            return None
 
     def close(self):
         self.conn.close()
