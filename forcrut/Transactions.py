@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtCore
 from .Constants import centerWidget, Constants
 from .Filter import FilterButton, ConditionsWidget
-from typing import Generator
+from typing import Generator, Iterator
 from .NewTransaction import OperationWindow
 from DB.DB import Database
 
@@ -114,7 +114,11 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.transactionsView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 		self.transactionsView.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
 		# getData function to get data from the table
-		def getData():
+		def getData() -> Generator:
+			"""
+				Returns data from the QTableWidget.
+			"""
+
 			for i in range(1, self.transactionsView.rowCount()):
 				yield [self.transactionsView.verticalHeaderItem(i).text()] + \
 				[buffer.text() if (buffer:=self.transactionsView.item(i, j)) else None for j in range(len(self.__columns))]
@@ -167,7 +171,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 		pass
 
-	def reload(self, data: Generator|None=None):
+	def reload(self, data: Iterator|None=None):
 		"""
 			Reload data in table by database or filter
 		"""

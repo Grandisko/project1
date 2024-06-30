@@ -57,6 +57,7 @@ class AuthorizationWindow(QtWidgets.QDialog):
 		self.warning = QtWidgets.QLabel("", self.viewButtonsWidget)
 		self.warning.setObjectName("warningLabel")
 		self.warning.setWordWrap(True)  
+		self.warning.setAlignment(QtCore.Qt.AlignCenter)
 		fieldLayout.addWidget(self.warning)
 		# button to verificate entered data
 		self.confirmButtons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok, parent=self)

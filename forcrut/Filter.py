@@ -3,7 +3,7 @@ from .Constants import centerWidget, Constants
 from functools import partial
 from functools import cmp_to_key
 import re
-from typing import Callable, Any
+from typing import Callable, Any, Iterator
 
 
 class FilterButton(QtWidgets.QToolButton):
@@ -15,7 +15,9 @@ class FilterButton(QtWidgets.QToolButton):
 			...
 	"""
 
-	def __init__(self, text: str, columns: dict, table: QtWidgets.QTableWidget|None, parent: QtCore.QObject | None=None, handler: Callable[[QtCore.QObject, dict], None]|None=None) -> None:
+	filtered = QtCore.pyqtSignal(object)
+
+	def __init__(self, text: str, columns: dict, table: QtWidgets.QTableWidget|None, parent: QtCore.QObject | None=None, handler: Callable[[QtCore.QObject, dict], Any]|None=None) -> None:
 		"""
 			:param text: label text for button
 			:param columns: dict of keys (columns' names) and values (their data types)
@@ -37,40 +39,51 @@ class FilterButton(QtWidgets.QToolButton):
 			self.setParent(parent)
 		# form popup menu for the filter button
 		menu = QtWidgets.QMenu()
-		menu.addAction('Сортировать').triggered.connect(self.sortData)
-		menu.addAction('Фильтровать по условию').triggered.connect(self.sortDataBy)
+		menu.addAction('Сортировать').triggered.connect(self.sortDataMenu)
+		menu.addAction('Фильтровать по условию').triggered.connect(self.filterDataMenu)
 		# menu setting
 		self.setMenu(menu)
 		self.setPopupMode(QtWidgets.QToolButton.InstantPopup)
 
-	def sortData(self) -> None:
+	def sortDataMenu(self) -> None:
 		"""
-			Creats and shows 1 sorting widget
+			Shows a sorting menu
 		"""
 
 		if self.sortingWidget is None:
 			self.sortingWidget = SortingWidget(self.__columns, table=self.__table, parent=self, handler=self.__handler)
+			self.sortingWidget.filtered.connect(self.filteredData)
 			self.sortingWidget.closed.connect(lambda: setattr(self, 'sortingWidget', None))
 			self.sortingWidget.show()
 
-	def sortDataBy(self) -> None:
+	def filterDataMenu(self) -> None:
 		"""
-			Creats and shows 1 conditions widget
+			Shows a filtering menu
 		"""
 		
 		if self.conditionsWidget is None:
 			self.conditionsWidget = ConditionsWidget(self.__columns, table=self.__table, parent=self, handler=self.__handler)
+			self.conditionsWidget.filtered.connect(self.filteredData)
 			self.conditionsWidget.closed.connect(lambda: setattr(self, 'conditionsWidget', None))
 			self.conditionsWidget.show()
+
+	def filteredData(self, data: Iterator) -> None:
+		"""
+			Handler the filtered signal of the menu
+		"""
+
+		self.filtered.emit(data)
 
 
 class AbstractFilterWidget(QtWidgets.QDialog):
 	"""
 		Parent of filter widgets that have signal
-			closed: when widget is closing
+			closed: when widget is closing,
+			filtered: when data is filtered
 	"""
 
 	closed = QtCore.pyqtSignal()
+	filtered = QtCore.pyqtSignal(object)
 
 	def __init__(self, columns: dict, table: QtWidgets.QTableWidget|None, title: str="Параметры фильтра", parent: QtCore.QObject|None=None, handler: Callable[[QtCore.QObject, dict], None]|None=None) -> None:
 		"""
@@ -130,7 +143,7 @@ class SortingWidget(AbstractFilterWidget):
 		Widget with sorting settings
 	"""
 
-	def __init__(self, columns: dict, table: QtWidgets.QTableWidget|None, title: str="Параметры фильтра", parent: QtCore.QObject|None=None, handler: Callable[[QtCore.QObject, dict], None]|None=None) -> None:
+	def __init__(self, columns: dict, parent: QtCore.QObject|None=None, **kwargs) -> None:
 		"""
 			:param columns: dict of keys (columns' names) and values (their data types)
 				Example, {'information': TEXT},
@@ -140,7 +153,7 @@ class SortingWidget(AbstractFilterWidget):
 			:param handler: function, which takes filtered data
 		"""
 
-		super().__init__(columns, table=table, title=title, parent=parent, handler=handler)
+		super().__init__(columns, parent=parent, **kwargs)
 		# type of the instruction
 		self.instructions['__type__'] = Constants.SORTING
 		# variable containing the last instruction sequence number
@@ -246,8 +259,11 @@ class SortingWidget(AbstractFilterWidget):
 			# get data from table
 			data = list(table.getData())
 			data.sort(key=cmp_to_key(__check))
+			data = iter(data)
 		else:
 			raise Exception(f"Unrecognised instructions type {self.instructions.get('type')} in {self.instructions}")
+
+		self.filtered.emit(data)
 
 		if handler:
 			handler(data)
@@ -268,7 +284,7 @@ class ConditionsWidget(AbstractFilterWidget):
 		Widget with conditions settings
 	"""
 
-	def __init__(self, columns: dict, table: QtWidgets.QTableWidget|None, title: str="Параметры фильтра", parent: QtCore.QObject|None=None, handler: Callable[[QtCore.QObject, dict], None]|None=None) -> None:
+	def __init__(self, columns: dict, parent: QtCore.QObject|None=None, **kwargs) -> None:
 		"""
 			:param columns: dict of keys (columns' names) and values (their data types)
 				Example, {'information': TEXT},
@@ -278,7 +294,7 @@ class ConditionsWidget(AbstractFilterWidget):
 			:param handler: function, which takes filtered data
 		"""
 
-		super().__init__(columns, table=table, title=title, parent=parent, handler=handler)
+		super().__init__(columns, parent=parent, **kwargs)
 		# type of the instruction
 		self.instructions['__type__'] = Constants.CONDITIONS_SORTING
 		# QDialog setting
@@ -398,6 +414,8 @@ class ConditionsWidget(AbstractFilterWidget):
 		else:
 			raise Exception(f"Unrecognised instructions type {self.instructions.get('type')} in {self.instructions}")
 
+		self.filtered.emit(data)
+		
 		if handler:
 			handler(data)
 
