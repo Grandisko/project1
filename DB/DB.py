@@ -8,7 +8,6 @@ class Database:
     def __init__(self):
         self.conn = sqlite3.connect(self.db_file)
         self.cursor = self.conn.cursor()
-# TODO тригеры, виртуальные колонки
     # ex_time только дни и к ним прибавляем время транзакции
     def create_tables(self):
         self.cursor.execute("""
