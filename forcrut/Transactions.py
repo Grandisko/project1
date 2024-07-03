@@ -1,8 +1,8 @@
 from PyQt5 import QtWidgets, QtCore
-from .Constants import centerWidget, Constants
-from .Filter import FilterButton, ConditionsWidget
-from typing import Generator, Iterator
-from .NewTransaction import OperationWindow
+from Constants import centerWidget, Constants, fill_table
+from .Filter import FilterButton
+from typing import Generator, Iterator, Callable
+from .NewTransaction import AbstractOperationWindow
 from DB.DB import Database
 
 
@@ -33,9 +33,9 @@ class MainWindow(QtWidgets.QMainWindow):
 		# required fields
 		self.__user = user
 		self.__columns = columns
+		self.__db = db
 		self.super = params.get('super')
 		self.redact = params.get('redact')
-		self.__db = db
 		# central widget settings
 		self.centralWidget = QtWidgets.QWidget(self)
 		self.centralWidget.setObjectName("MainContainer")
@@ -104,7 +104,6 @@ class MainWindow(QtWidgets.QMainWindow):
 			viewButtonsLayout.addWidget(bufferElem, 1, 0, 1, 2)
 		# form the table
 		self.transactionsView = QtWidgets.QTableWidget(self.centralWidget)
-		self.transactionsView.setMinimumSize(770, 390)
 		self.transactionsView.setObjectName("transactionsView")
 		self.transactionsView.setSortingEnabled(False)
 		self.transactionsView.setEditTriggers(QtWidgets.QTableWidget.NoEditTriggers)
@@ -112,7 +111,6 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.mainLayout.addWidget(self.transactionsView, 2, 0, 3, 3)
 		# adaptability of the table
 		self.transactionsView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-		self.transactionsView.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
 		# getData function to get data from the table
 		def getData() -> Generator:
 			"""
@@ -151,7 +149,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		# turn off button
 		bufferButton.setEnabled(False)
 		# new operation window
-		bufferNewOperation = OperationWindow(operation_id, bufferButton.text(), parent=self, user=self.__user, db=self.__db)
+		bufferNewOperation = AbstractOperationWindow.create(operation_id, bufferButton.text(), parent=self, user=self.__user, db=self.__db)
 		# turn on the button after creating will be completed
 		bufferNewOperation.closed.connect(lambda: bufferButton.setEnabled(True))
 		# show the new operation window
@@ -171,33 +169,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
 		pass
 
-	def reload(self, data: Iterator|None=None):
+	def reload(self, data: Iterator|Callable|None=None):
 		"""
-			Reload data in table by database or filter
+			Reload data in table
 		"""
 
-		# set table's dimensions
-		self.transactionsView.setColumnCount(len(self.__columns))
-		self.transactionsView.setHorizontalHeaderLabels(self.__columns.keys())
-		# decide get data by database or generator
 		if data is None:
 			data = self.__db.get_transactions()
-		else:
-			data = list(data)
-		# clear data in table
-		self.transactionsView.clearContents()
-		# set first row with 'id'
-		self.transactionsView.setRowCount(len(data) + 1)
-		self.transactionsView.setVerticalHeaderLabels(['id'])
-		# inserting items into the table
-		for i, rowData in enumerate(data, start=1):
-			item = QtWidgets.QTableWidgetItem(str(rowData[0]))
-			item.setTextAlignment(QtCore.Qt.AlignCenter)
-			self.transactionsView.setVerticalHeaderItem(i, item)
-			for j, item in enumerate(rowData[1:]):
-				item = QtWidgets.QTableWidgetItem(str(item))
-				item.setTextAlignment(QtCore.Qt.AlignCenter)
-				self.transactionsView.setItem(i, j, item)
+
+		fill_table(columns=self.__columns, data=data, table=self.transactionsView)
+
 
 
 if __name__ == '__main__':

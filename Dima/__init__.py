@@ -1,7 +1,8 @@
 import os
 import sys
 
-# added directory with db
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),"forcrut")))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),"Dima")))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),"DB")))
+
+# added directories
+for directory in map(os.path.abspath, filter(os.path.isdir, os.listdir(os.path.dirname(os.path.dirname(__file__))))):
+	if directory not in sys.path:
+		sys.path.append(directory)

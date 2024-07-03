@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, QtCore
-from .Constants import centerWidget, Constants
+from Constants import centerWidget
 from .Transactions import MainWindow as Transactions
 from DB.DB import TABLES, Database
 
@@ -81,7 +81,8 @@ class AuthorizationWindow(QtWidgets.QDialog):
 			Confirm the received login and password
 		"""
 
-		response = self.__db.get_admin_params(self.loginInput.text(), self.passwordInput.text())
+		# response = self.__db.get_admin_params(self.loginInput.text(), self.passwordInput.text())
+		response = self.__db.get_admin_params("admin0", "password0")  # TODO убрать при релизе
 		if response is None:
 			self.passwordInput.clear()
 			self.warning.setText("<b style='color: red'>Введенный логин или пароль не привязан ни к какому аккаунту. Введите правильные данные.</b>")
