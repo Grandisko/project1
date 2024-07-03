@@ -8,7 +8,7 @@ class Database:
     def __init__(self):
         self.conn = sqlite3.connect(self.db_file)
         self.cursor = self.conn.cursor()
-# TODO пересмотреть колонки, тригеры, виртуальные колонки
+# TODO тригеры, виртуальные колонки
     # ex_time только дни и к ним прибавляем время транзакции
     def create_tables(self):
         self.cursor.execute("""
@@ -326,6 +326,66 @@ class Database:
         """
         if self.cursor.rowcount == 0:
             print("Table Goods already exists")
+        self.conn.commit()
+
+    def triggers(self):
+        self.cursor.execute("""
+             CREATE TRIGGER IF NOT EXISTS trg_GoodsWarehouse_insert
+             AFTER INSERT ON GoodsWarehouse
+             FOR EACH ROW
+             BEGIN
+                 INSERT INTO GoodsWarehouseView (good_id, warehouse_id, count, expire_date, accept_date, accept_id)
+                 VALUES (NEW.good_id, NEW.warehouse_id, NEW.count, NEW.expire_date, NEW.accept_date, NEW.accept_id);
+             END;
+         """)
+        self.cursor.execute("""
+             CREATE TRIGGER IF NOT EXISTS trg_Sell_insert
+             AFTER INSERT ON Sell
+             FOR EACH ROW
+             BEGIN
+                 INSERT INTO SellData (good_id, sell_id, count, expire_date)
+                 SELECT g.id, NEW.id, gw.count, gw.expire_date
+                 FROM Goods g
+                 JOIN GoodsWarehouse gw ON g.id = gw.good_id
+                 WHERE gw.warehouse_id = NEW.from_wh_id;
+             END;
+         """)
+        self.cursor.execute("""
+             CREATE TRIGGER IF NOT EXISTS trg_Transportation_insert
+             AFTER INSERT ON Transportation
+             FOR EACH ROW
+             BEGIN
+                 INSERT INTO TransportationData (good_id, transportation_id, count, expire_date)
+                 SELECT g.id, NEW.id, gw.count, gw.expire_date
+                 FROM Goods g
+                 JOIN GoodsWarehouse gw ON g.id = gw.good_id
+                 WHERE gw.warehouse_id = NEW.from_wh_id;
+             END;
+         """)
+        self.cursor.execute("""
+             CREATE TRIGGER IF NOT EXISTS trg_Acceptance_insert
+             AFTER INSERT ON Acceptance
+             FOR EACH ROW
+             BEGIN
+                 INSERT INTO AcceptanceData (good_id, acceptance_id, count, expire_date)
+                 SELECT g.id, NEW.id, gw.count, gw.expire_date
+                 FROM Goods g
+                 JOIN GoodsWarehouse gw ON g.id = gw.good_id
+                 WHERE gw.warehouse_id = NEW.to_wh;
+             END;
+         """)
+        self.cursor.execute("""
+             CREATE TRIGGER IF NOT EXISTS trg_WriteOff_insert
+             AFTER INSERT ON WriteOff
+             FOR EACH ROW
+             BEGIN
+                 INSERT INTO WriteOffData (good_id, write_of_id, count, expire_date)
+                 SELECT g.id, NEW.id, gw.count, gw.expire_date
+                 FROM Goods g
+                 JOIN GoodsWarehouse gw ON g.id = gw.good_id
+                 WHERE gw.warehouse_id = NEW.from_wh_id;
+             END;
+         """)
         self.conn.commit()
     def close(self):
         self.conn.close()
