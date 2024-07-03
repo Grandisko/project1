@@ -8,7 +8,7 @@ class Database:
     def __init__(self):
         self.conn = sqlite3.connect(self.db_file)
         self.cursor = self.conn.cursor()
-# TODO пересмотреть колонки, каскады, тригеры, функции в дс, виртуальные колонки,
+# TODO пересмотреть колонки, тригеры, виртуальные колонки
     # ex_time только дни и к ним прибавляем время транзакции
     def create_tables(self):
         self.cursor.execute("""
@@ -30,8 +30,8 @@ class Database:
                 expire_date INTEGER,
                 accept_date INTEGER,
                 accept_id INTEGER,
-                FOREIGN KEY (good_id) REFERENCES Goods(id),
-                FOREIGN KEY (warehouse_id) REFERENCES Warehouse(id)
+                FOREIGN KEY (good_id) REFERENCES Goods(id) ON DELETE CASCADE,
+                FOREIGN KEY (warehouse_id) REFERENCES Warehouse(id) ON DELETE CASCADE
             )
         """)
         self.cursor.execute("""
@@ -68,10 +68,10 @@ class Database:
                 id INTEGER PRIMARY KEY,
                 transaction_id INTEGER,
                 client_id INTEGER,
-                from_wh INTEGER,
-                FOREIGN KEY (transaction_id) REFERENCES Transactions(id),
-                FOREIGN KEY (client_id) REFERENCES Client(id),
-                FOREIGN KEY (from_wh) REFERENCES Warehouse(id)
+                from_wh_id INTEGER,
+                FOREIGN KEY (transaction_id) REFERENCES Transactions(id) ON DELETE CASCADE,
+                FOREIGN KEY (client_id) REFERENCES Client(id) ON DELETE CASCADE,
+                FOREIGN KEY (from_wh_id) REFERENCES Warehouse(id) ON DELETE CASCADE
             )
         """)
         self.cursor.execute("""
@@ -90,9 +90,9 @@ class Database:
                 transaction_id INTEGER,
                 from_wh_id INTEGER,
                 to_wh_id INTEGER,
-                FOREIGN KEY (transaction_id) REFERENCES Transactions(id),
-                FOREIGN KEY (from_wh) REFERENCES Warehouse(id),
-                FOREIGN KEY (to_wh) REFERENCES Warehouse(id)
+                FOREIGN KEY (transaction_id) REFERENCES Transactions(id) ON DELETE CASCADE,
+                FOREIGN KEY (from_wh_id) REFERENCES Warehouse(id) ON DELETE CASCADE,
+                FOREIGN KEY (to_wh_id) REFERENCES Warehouse(id) ON DELETE CASCADE
             )
         """)
         self.cursor.execute("""
@@ -102,8 +102,8 @@ class Database:
                 transportation_id INTEGER,
                 count INTEGER,
                 expire_date INTEGER,
-                FOREIGN KEY (good_id) REFERENCES Goods(id),
-                FOREIGN KEY (transportation_id) REFERENCES Transportation(id)
+                FOREIGN KEY (good_id) REFERENCES Goods(id) ON DELETE CASCADE,
+                FOREIGN KEY (transportation_id) REFERENCES Transportation(id) ON DELETE CASCADE
             )
         """)
         self.cursor.execute("""
@@ -113,8 +113,8 @@ class Database:
                 acceptance_id INTEGER,
                 count INTEGER,
                 expire_date INTEGER,
-                FOREIGN KEY (good_id) REFERENCES Goods(id),
-                FOREIGN KEY (acceptance_id) REFERENCES Acceptance(id)
+                FOREIGN KEY (good_id) REFERENCES Goods(id) ON DELETE CASCADE,
+                FOREIGN KEY (acceptance_id) REFERENCES Acceptance(id) ON DELETE CASCADE
             )
         """)
         self.cursor.execute("""
@@ -122,8 +122,8 @@ class Database:
                 id INTEGER PRIMARY KEY,
                 transaction_id INTEGER,
                 to_wh INTEGER,
-                FOREIGN KEY (transaction_id) REFERENCES Transactions(id),
-                FOREIGN KEY (to_wh) REFERENCES Warehouse(id)
+                FOREIGN KEY (transaction_id) REFERENCES Transactions(id) ON DELETE CASCADE,
+                FOREIGN KEY (to_wh) REFERENCES Warehouse(id) ON DELETE CASCADE
             )
         """)
         self.cursor.execute("""
@@ -133,17 +133,17 @@ class Database:
                 sell_id INTEGER,
                 count INTEGER,
                 expire_date INTEGER,
-                FOREIGN KEY (good_id) REFERENCES Goods(id),
-                FOREIGN KEY (sell_id) REFERENCES Sell(id)
+                FOREIGN KEY (good_id) REFERENCES Goods(id) ON DELETE CASCADE,
+                FOREIGN KEY (sell_id) REFERENCES Sell(id) ON DELETE CASCADE
             )
         """)
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS WriteOff (
                 id INTEGER PRIMARY KEY,
                 transaction_id INTEGER,
-                from_wh INTEGER,
-                FOREIGN KEY (transaction_id) REFERENCES Transactions(id),
-                FOREIGN KEY (from_wh) REFERENCES Warehouse(id)
+                from_wh_id INTEGER,
+                FOREIGN KEY (transaction_id) REFERENCES Transactions(id) ON DELETE CASCADE,
+                FOREIGN KEY (from_wh_id) REFERENCES Warehouse(id) ON DELETE CASCADE
             )
         """)
         self.cursor.execute("""
@@ -153,8 +153,8 @@ class Database:
                 write_of_id INTEGER,
                 count INTEGER,
                 expire_date INTEGER,
-                FOREIGN KEY (good_id) REFERENCES Goods(id),
-                FOREIGN KEY (write_of_id) REFERENCES WriteOff(id)
+                FOREIGN KEY (good_id) REFERENCES Goods(id) ON DELETE CASCADE,
+                FOREIGN KEY (write_of_id) REFERENCES WriteOff(id) ON DELETE CASCADE
             )
         """)
         self.conn.commit()
