@@ -8,7 +8,7 @@ class Database:
     def __init__(self):
         self.conn = sqlite3.connect(self.db_file)
         self.cursor = self.conn.cursor()
-# TODO пересмотреть колонки, каскады, тригеры
+# TODO пересмотреть колонки, каскады, тригеры, функции в дс, виртуальные колонки,
     # ex_time только дни и к ним прибавляем время транзакции
     def create_tables(self):
         self.cursor.execute("""
@@ -159,6 +159,51 @@ class Database:
         """)
         self.conn.commit()
 
+    def delete(self, table_name, id_or_ids):
+        """
+        функция удаления
+        """
+        if isinstance(id_or_ids, list):
+            self.cursor.execute(f"DELETE FROM {table_name} WHERE id IN ({', '.join('?' for _ in id_or_ids)})",
+                                id_or_ids)
+        else:
+            self.cursor.execute(f"DELETE FROM {table_name} WHERE id = ?", (id_or_ids,))
+        self.conn.commit()
+
+    def update(self, table_name, id_or_ids, changes):
+        """
+        функция изменения
+        """
+        if isinstance(id_or_ids, list):
+            if isinstance(changes, list):
+                for i, id in enumerate(id_or_ids):
+                    self.cursor.execute(
+                        f"UPDATE {table_name} SET {', '.join(f'{key} = ?' for key in changes[i].keys())} WHERE id = ?",
+                        (*changes[i].values(), id))
+            elif isinstance(changes, dict):
+                self.cursor.execute(
+                    f"UPDATE {table_name} SET {', '.join(f'{key} = ?' for key in changes.keys())} WHERE id IN ({', '.join('?' for _ in id_or_ids)})",
+                    (*changes.values(), *id_or_ids))
+        else:
+            self.cursor.execute(
+                f"UPDATE {table_name} SET {', '.join(f'{key} = ?' for key in changes.keys())} WHERE id = ?",
+                (*changes.values(), id_or_ids))
+        self.conn.commit()
+
+    def insert(self, table_name, data):
+        """
+        функция добавления
+        """
+        if isinstance(data, list):
+            for item in data:
+                self.cursor.execute(
+                    f"INSERT INTO {table_name} ({', '.join(item.keys())}) VALUES ({', '.join('?' for _ in item.values())})",
+                    (*item.values(),))
+        else:
+            self.cursor.execute(
+                f"INSERT INTO {table_name} ({', '.join(data.keys())}) VALUES ({', '.join('?' for _ in data.values())})",
+                (*data.values(),))
+        self.conn.commit()
     def get_transactions(self):
         """
         Извлекает все транзакции из таблицы Transactions.
@@ -260,6 +305,28 @@ class Database:
         else:
             return None
 
+    def get_good_characteristics(self, good_id):
+        """
+        функция, которая вернет характеристики товара из таблицы Goods
+        """
+        self.cursor.execute("SELECT * FROM Goods WHERE id=?", (good_id,))
+        good_info = self.cursor.fetchone()
+        if good_info is None:
+            return None
+        good_info = list(good_info)
+        self.cursor.execute("SELECT SUM(count) FROM GoodsWarehouse WHERE good_id=?", (good_id,))
+        total_count = self.cursor.fetchone()[0]
+        if total_count is None:
+            total_count = 0
+        good_info.append(total_count)
+        return good_info
+    def table_check(self):
+        """
+        проверки на наличие информации в курсоре
+        """
+        if self.cursor.rowcount == 0:
+            print("Table Goods already exists")
+        self.conn.commit()
     def close(self):
         self.conn.close()
 
