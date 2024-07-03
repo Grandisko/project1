@@ -1,10 +1,9 @@
 import random
 import datetime
 import time
-from DB import Database
+from DB.DB import Database
 db = Database("database.db")
 db.create_tables()
-
 
 MINTIME = datetime.datetime(2023,8,6,8,14,59)
 MAXTIME = datetime.datetime(2024,8,6,8,14,59)
@@ -42,7 +41,7 @@ for i in range(50):
     good_id = random.randint(1, 10)
     warehouse_id = random.randint(1, 5)
     count = random.randint(1, 10)
-    expire_date = datetime.datetime.fromtimestamp(random.randint(mintime_ts, maxtime_ts)).strftime("%Y-%m-%d %H:%M:%S")
+    expire_date = "2022-01-01"
     goods_warehouse.append((good_id, warehouse_id, count, expire_date))
 db.cursor.executemany("INSERT INTO GoodsWarehouse (good_id, warehouse_id, count, expire_date) VALUES (?,?,?,?)", goods_warehouse)
 db.conn.commit()
@@ -86,7 +85,7 @@ transactions = []
 for i in range(50):
     type = random.choice(["sell", "buy"])
     who = random.randint(1, 10)
-    time = datetime.datetime.fromtimestamp(random.randint(mintime_ts, maxtime_ts)).strftime("%Y-%m-%d %H:%M:%S")
+    time = "2022-01-01"
     PS = f"PS{i}"
     transactions.append((type, who, time, PS))
 db.cursor.executemany("INSERT INTO Transactions (type, who, time, PS) VALUES (?,?,?,?)", transactions)
