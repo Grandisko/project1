@@ -13,7 +13,7 @@ class Database:
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS Goods (
                 id INTEGER PRIMARY KEY,
-                articul VARCHAR UNIQUE,  # added UNIQUE constraint
+                articul VARCHAR UNIQUE,  
                 name VARCHAR,
                 price INTEGER,
                 ex_time DATETIME, 
@@ -29,7 +29,7 @@ class Database:
                 expire_date INTEGER,
                 accept_date INTEGER,
                 accept_id INTEGER,
-                UNIQUE (good_id, warehouse_id),  # added UNIQUE constraint
+                UNIQUE (good_id, warehouse_id),  
                 FOREIGN KEY (good_id) REFERENCES Goods(id) ON DELETE CASCADE,
                 FOREIGN KEY (warehouse_id) REFERENCES Warehouse(id) ON DELETE CASCADE
             )
@@ -37,7 +37,7 @@ class Database:
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS Warehouse (
                 id INTEGER PRIMARY KEY,
-                name VARCHAR UNIQUE,  # added UNIQUE constraint
+                name VARCHAR UNIQUE,
                 coordinates_a REAL,
                 coordinates_b REAL,
                 adress VARCHAR
@@ -47,14 +47,14 @@ class Database:
             CREATE TABLE IF NOT EXISTS Client (
                 id INTEGER PRIMARY KEY,
                 Fio VARCHAR,
-                telephone VARCHAR UNIQUE,  # added UNIQUE constraint
+                telephone VARCHAR UNIQUE,
                 type BOOLEAN
             )
         """)
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS Admin (
                 id INTEGER PRIMARY KEY,
-                login VARCHAR UNIQUE,  # added UNIQUE constraint
+                login VARCHAR UNIQUE,  
                 password VARCHAR,
                 inner BOOLEAN,
                 sell BOOLEAN,
@@ -69,7 +69,7 @@ class Database:
                 transaction_id INTEGER,
                 client_id INTEGER,
                 from_wh_id INTEGER,
-                UNIQUE (transaction_id, client_id, from_wh_id),  # added UNIQUE constraint
+                UNIQUE (transaction_id, client_id, from_wh_id), 
                 FOREIGN KEY (transaction_id) REFERENCES Transactions(id) ON DELETE CASCADE,
                 FOREIGN KEY (client_id) REFERENCES Client(id) ON DELETE CASCADE,
                 FOREIGN KEY (from_wh_id) REFERENCES Warehouse(id) ON DELETE CASCADE
@@ -94,7 +94,7 @@ class Database:
                 transaction_id INTEGER,
                 from_wh_id INTEGER,
                 to_wh_id INTEGER,
-                UNIQUE (transaction_id, from_wh_id, to_wh_id),  # added UNIQUE constraint
+                UNIQUE (transaction_id, from_wh_id, to_wh_id), 
                 FOREIGN KEY (transaction_id) REFERENCES Transactions(id) ON DELETE CASCADE,
                 FOREIGN KEY (from_wh_id) REFERENCES Warehouse(id) ON DELETE CASCADE,
                 FOREIGN KEY (to_wh_id) REFERENCES Warehouse(id) ON DELETE CASCADE
@@ -107,7 +107,7 @@ class Database:
                 transportation_id INTEGER,
                 count INTEGER,
                 expire_date INTEGER,
-                UNIQUE (good_id, transportation_id),  # added UNIQUE constraint
+                UNIQUE (good_id, transportation_id),  
                 FOREIGN KEY (good_id) REFERENCES Goods(id) ON DELETE CASCADE,
                 FOREIGN KEY (transportation_id) REFERENCES Transportation(id) ON DELETE CASCADE
             )
@@ -119,7 +119,7 @@ class Database:
                 acceptance_id INTEGER,
                 count INTEGER,
                 expire_date INTEGER,
-                UNIQUE (good_id, acceptance_id),  # added UNIQUE constraint
+                UNIQUE (good_id, acceptance_id),  
                 FOREIGN KEY (good_id) REFERENCES Goods(id) ON DELETE CASCADE,
                 FOREIGN KEY (acceptance_id) REFERENCES Acceptance(id) ON DELETE CASCADE
             )
@@ -129,7 +129,7 @@ class Database:
                 id INTEGER PRIMARY KEY,
                 transaction_id INTEGER,
                 to_wh INTEGER,
-                UNIQUE (transaction_id, to_wh),  # added UNIQUE constraint
+                UNIQUE (transaction_id, to_wh), 
                 FOREIGN KEY (transaction_id) REFERENCES Transactions(id) ON DELETE CASCADE,
                 FOREIGN KEY (to_wh) REFERENCES Warehouse(id) ON DELETE CASCADE
             )
@@ -141,7 +141,7 @@ class Database:
                 sell_id INTEGER,
                 count INTEGER,
                 expire_date INTEGER,
-                UNIQUE (good_id, sell_id),  # added UNIQUE constraint
+                UNIQUE (good_id, sell_id),  
                 FOREIGN KEY (good_id) REFERENCES Goods(id) ON DELETE CASCADE,
                 FOREIGN KEY (sell_id) REFERENCES Sell(id) ON DELETE CASCADE
             )
@@ -151,7 +151,7 @@ class Database:
                 id INTEGER PRIMARY KEY,
                 transaction_id INTEGER,
                 from_wh_id INTEGER,
-                UNIQUE (transaction_id, from_wh_id),  # added UNIQUE constraint
+                UNIQUE (transaction_id, from_wh_id),  
                 FOREIGN KEY (transaction_id) REFERENCES Transactions(id) ON DELETE CASCADE,
                 FOREIGN KEY (from_wh_id) REFERENCES Warehouse(id) ON DELETE CASCADE
             )
@@ -163,7 +163,7 @@ class Database:
                 write_of_id INTEGER,
                 count INTEGER,
                 expire_date INTEGER,
-                UNIQUE (good_id, write_of_id),  # added UNIQUE constraint
+                UNIQUE (good_id, write_of_id),  
                 FOREIGN KEY (good_id) REFERENCES Goods(id) ON DELETE CASCADE,
                 FOREIGN KEY (write_of_id) REFERENCES WriteOff(id) ON DELETE CASCADE
             )
@@ -232,7 +232,10 @@ class Database:
         """
         Извлекает все склады из таблицы Warehouse.
         """
-        self.cursor.execute("SELECT * FROM Warehouse")
+        self.cursor.execute("""
+                SELECT id, name, adress
+                FROM Warehouse
+            """)
         return self.cursor.fetchall()
 
     def get_warehouse_goods(self, warehouse_id):
