@@ -342,7 +342,6 @@ class Database:
     def merge_duplicates(self, table_name, columns_to_merge):
         """
         Merge duplicate records in a table, excluding `id` and `count` columns.
-
         :param table_name: Name of the table to merge duplicates in
         :param columns_to_merge: List of column names to merge duplicates on
         """
@@ -372,19 +371,18 @@ class Database:
     def check_transaction_type(self, transaction_data):
         """
         Check the type of a transaction.
-
         :param transaction_data: Dictionary with transaction data
         :return: Type of the transaction (one of 'sell', 'transportation', 'acceptance', 'write_off')
         """
         transaction_type = transaction_data['type']
         if transaction_type == 0:
-            return 'sell'
+            return 'OPERATION_RELOCATE'
         elif transaction_type == 1:
-            return 'transportation'
+            return 'OPERATION_WRITE_OFF'
         elif transaction_type == 2:
-            return 'acceptance'
+            return 'OPERATION_ACCEPT'
         elif transaction_type == 3:
-            return 'write_off'
+            return 'OPERATION_SELL'
         else:
             raise ValueError(f"Unknown transaction type: {transaction_type}")
     def close(self):
