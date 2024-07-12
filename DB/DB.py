@@ -1,7 +1,7 @@
 import sqlite3
 from PyQt5 import QtWidgets, QtCore
-from forcrut.Constants import Constants
 import datetime
+from Constants import Constants
 
 class Database:
     db_file = Constants.DATABASE_PATH
@@ -13,7 +13,7 @@ class Database:
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS Goods (
                 id INTEGER PRIMARY KEY,
-                articul VARCHAR,
+                articul VARCHAR UNIQUE,  # added UNIQUE constraint
                 name VARCHAR,
                 price INTEGER,
                 ex_time DATETIME, 
@@ -29,6 +29,7 @@ class Database:
                 expire_date INTEGER,
                 accept_date INTEGER,
                 accept_id INTEGER,
+                UNIQUE (good_id, warehouse_id),  # added UNIQUE constraint
                 FOREIGN KEY (good_id) REFERENCES Goods(id) ON DELETE CASCADE,
                 FOREIGN KEY (warehouse_id) REFERENCES Warehouse(id) ON DELETE CASCADE
             )
@@ -36,7 +37,7 @@ class Database:
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS Warehouse (
                 id INTEGER PRIMARY KEY,
-                name VARCHAR,
+                name VARCHAR UNIQUE,  # added UNIQUE constraint
                 coordinates_a REAL,
                 coordinates_b REAL,
                 adress VARCHAR
@@ -46,14 +47,14 @@ class Database:
             CREATE TABLE IF NOT EXISTS Client (
                 id INTEGER PRIMARY KEY,
                 Fio VARCHAR,
-                telephone VARCHAR,
+                telephone VARCHAR UNIQUE,  # added UNIQUE constraint
                 type BOOLEAN
             )
         """)
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS Admin (
                 id INTEGER PRIMARY KEY,
-                login VARCHAR,
+                login VARCHAR UNIQUE,  # added UNIQUE constraint
                 password VARCHAR,
                 inner BOOLEAN,
                 sell BOOLEAN,
@@ -68,6 +69,7 @@ class Database:
                 transaction_id INTEGER,
                 client_id INTEGER,
                 from_wh_id INTEGER,
+                UNIQUE (transaction_id, client_id, from_wh_id),  # added UNIQUE constraint
                 FOREIGN KEY (transaction_id) REFERENCES Transactions(id) ON DELETE CASCADE,
                 FOREIGN KEY (client_id) REFERENCES Client(id) ON DELETE CASCADE,
                 FOREIGN KEY (from_wh_id) REFERENCES Warehouse(id) ON DELETE CASCADE
@@ -80,7 +82,10 @@ class Database:
                 who INTEGER,
                 time DATETIME,
                 PS TEXT,
-                FOREIGN KEY (who) REFERENCES Admin(id)
+                who_login TEXT GENERATED ALWAYS AS (
+                    SELECT a.login FROM Admin a WHERE a.id = Transactions.who
+                ) VIRTUAL,
+                FOREIGN KEY (who) REFERENCES Admin(id) ON DELETE CASCADE
             )
         """)
         self.cursor.execute("""
@@ -89,6 +94,7 @@ class Database:
                 transaction_id INTEGER,
                 from_wh_id INTEGER,
                 to_wh_id INTEGER,
+                UNIQUE (transaction_id, from_wh_id, to_wh_id),  # added UNIQUE constraint
                 FOREIGN KEY (transaction_id) REFERENCES Transactions(id) ON DELETE CASCADE,
                 FOREIGN KEY (from_wh_id) REFERENCES Warehouse(id) ON DELETE CASCADE,
                 FOREIGN KEY (to_wh_id) REFERENCES Warehouse(id) ON DELETE CASCADE
@@ -101,6 +107,7 @@ class Database:
                 transportation_id INTEGER,
                 count INTEGER,
                 expire_date INTEGER,
+                UNIQUE (good_id, transportation_id),  # added UNIQUE constraint
                 FOREIGN KEY (good_id) REFERENCES Goods(id) ON DELETE CASCADE,
                 FOREIGN KEY (transportation_id) REFERENCES Transportation(id) ON DELETE CASCADE
             )
@@ -112,6 +119,7 @@ class Database:
                 acceptance_id INTEGER,
                 count INTEGER,
                 expire_date INTEGER,
+                UNIQUE (good_id, acceptance_id),  # added UNIQUE constraint
                 FOREIGN KEY (good_id) REFERENCES Goods(id) ON DELETE CASCADE,
                 FOREIGN KEY (acceptance_id) REFERENCES Acceptance(id) ON DELETE CASCADE
             )
@@ -121,6 +129,7 @@ class Database:
                 id INTEGER PRIMARY KEY,
                 transaction_id INTEGER,
                 to_wh INTEGER,
+                UNIQUE (transaction_id, to_wh),  # added UNIQUE constraint
                 FOREIGN KEY (transaction_id) REFERENCES Transactions(id) ON DELETE CASCADE,
                 FOREIGN KEY (to_wh) REFERENCES Warehouse(id) ON DELETE CASCADE
             )
@@ -132,6 +141,7 @@ class Database:
                 sell_id INTEGER,
                 count INTEGER,
                 expire_date INTEGER,
+                UNIQUE (good_id, sell_id),  # added UNIQUE constraint
                 FOREIGN KEY (good_id) REFERENCES Goods(id) ON DELETE CASCADE,
                 FOREIGN KEY (sell_id) REFERENCES Sell(id) ON DELETE CASCADE
             )
@@ -141,6 +151,7 @@ class Database:
                 id INTEGER PRIMARY KEY,
                 transaction_id INTEGER,
                 from_wh_id INTEGER,
+                UNIQUE (transaction_id, from_wh_id),  # added UNIQUE constraint
                 FOREIGN KEY (transaction_id) REFERENCES Transactions(id) ON DELETE CASCADE,
                 FOREIGN KEY (from_wh_id) REFERENCES Warehouse(id) ON DELETE CASCADE
             )
@@ -152,6 +163,7 @@ class Database:
                 write_of_id INTEGER,
                 count INTEGER,
                 expire_date INTEGER,
+                UNIQUE (good_id, write_of_id),  # added UNIQUE constraint
                 FOREIGN KEY (good_id) REFERENCES Goods(id) ON DELETE CASCADE,
                 FOREIGN KEY (write_of_id) REFERENCES WriteOff(id) ON DELETE CASCADE
             )
@@ -327,65 +339,54 @@ class Database:
             print("Table Goods already exists")
         self.conn.commit()
 
-    def triggers(self):
-        self.cursor.execute("""
-             CREATE TRIGGER IF NOT EXISTS trg_GoodsWarehouse_insert
-             AFTER INSERT ON GoodsWarehouse
-             FOR EACH ROW
-             BEGIN
-                 INSERT INTO GoodsWarehouseView (good_id, warehouse_id, count, expire_date, accept_date, accept_id)
-                 VALUES (NEW.good_id, NEW.warehouse_id, NEW.count, NEW.expire_date, NEW.accept_date, NEW.accept_id);
-             END;
-         """)
-        self.cursor.execute("""
-             CREATE TRIGGER IF NOT EXISTS trg_Sell_insert
-             AFTER INSERT ON Sell
-             FOR EACH ROW
-             BEGIN
-                 INSERT INTO SellData (good_id, sell_id, count, expire_date)
-                 SELECT g.id, NEW.id, gw.count, gw.expire_date
-                 FROM Goods g
-                 JOIN GoodsWarehouse gw ON g.id = gw.good_id
-                 WHERE gw.warehouse_id = NEW.from_wh_id;
-             END;
-         """)
-        self.cursor.execute("""
-             CREATE TRIGGER IF NOT EXISTS trg_Transportation_insert
-             AFTER INSERT ON Transportation
-             FOR EACH ROW
-             BEGIN
-                 INSERT INTO TransportationData (good_id, transportation_id, count, expire_date)
-                 SELECT g.id, NEW.id, gw.count, gw.expire_date
-                 FROM Goods g
-                 JOIN GoodsWarehouse gw ON g.id = gw.good_id
-                 WHERE gw.warehouse_id = NEW.from_wh_id;
-             END;
-         """)
-        self.cursor.execute("""
-             CREATE TRIGGER IF NOT EXISTS trg_Acceptance_insert
-             AFTER INSERT ON Acceptance
-             FOR EACH ROW
-             BEGIN
-                 INSERT INTO AcceptanceData (good_id, acceptance_id, count, expire_date)
-                 SELECT g.id, NEW.id, gw.count, gw.expire_date
-                 FROM Goods g
-                 JOIN GoodsWarehouse gw ON g.id = gw.good_id
-                 WHERE gw.warehouse_id = NEW.to_wh;
-             END;
-         """)
-        self.cursor.execute("""
-             CREATE TRIGGER IF NOT EXISTS trg_WriteOff_insert
-             AFTER INSERT ON WriteOff
-             FOR EACH ROW
-             BEGIN
-                 INSERT INTO WriteOffData (good_id, write_of_id, count, expire_date)
-                 SELECT g.id, NEW.id, gw.count, gw.expire_date
-                 FROM Goods g
-                 JOIN GoodsWarehouse gw ON g.id = gw.good_id
-                 WHERE gw.warehouse_id = NEW.from_wh_id;
-             END;
-         """)
+    def merge_duplicates(self, table_name, columns_to_merge):
+        """
+        Merge duplicate records in a table, excluding `id` and `count` columns.
+
+        :param table_name: Name of the table to merge duplicates in
+        :param columns_to_merge: List of column names to merge duplicates on
+        """
+        self.cursor.execute(
+            f"SELECT {', '.join(columns_to_merge)} FROM {table_name} GROUP BY {', '.join(columns_to_merge)}")
+        unique_rows = self.cursor.fetchall()
+
+        for row in unique_rows:
+            self.cursor.execute(
+                f"SELECT id, count FROM {table_name} WHERE {', '.join([f'{col} = ?' for col in columns_to_merge])}",
+                row)
+            duplicate_rows = self.cursor.fetchall()
+
+            if len(duplicate_rows) > 1:
+                # Merge duplicate rows
+                merged_id = duplicate_rows[0][0]
+                merged_count = sum([r[1] for r in duplicate_rows])
+
+                self.cursor.execute(f"UPDATE {table_name} SET count = ? WHERE id = ?", (merged_count, merged_id))
+
+                # Delete duplicate rows
+                for row in duplicate_rows[1:]:
+                    self.cursor.execute(f"DELETE FROM {table_name} WHERE id = ?", (row[0],))
+
         self.conn.commit()
+
+    def check_transaction_type(self, transaction_data):
+        """
+        Check the type of a transaction.
+
+        :param transaction_data: Dictionary with transaction data
+        :return: Type of the transaction (one of 'sell', 'transportation', 'acceptance', 'write_off')
+        """
+        transaction_type = transaction_data['type']
+        if transaction_type == 0:
+            return 'sell'
+        elif transaction_type == 1:
+            return 'transportation'
+        elif transaction_type == 2:
+            return 'acceptance'
+        elif transaction_type == 3:
+            return 'write_off'
+        else:
+            raise ValueError(f"Unknown transaction type: {transaction_type}")
     def close(self):
         self.conn.close()
 
