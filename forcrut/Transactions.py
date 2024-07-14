@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets, QtCore
 from Constants import centerWidget, Constants, fill_table
 from .Filter import FilterButton
 from typing import Generator, Iterator, Callable
-from .NewTransaction import AbstractOperationWindow
+from .NewTransaction import createTransaction
 from DB.DB import Database
 
 
@@ -146,10 +146,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
 		# clicked button
 		bufferButton = self.operations.button(operation_id)
-		# turn off button
+		# turn off the button
 		bufferButton.setEnabled(False)
 		# new operation window
-		bufferNewOperation = AbstractOperationWindow.create(operation_id, bufferButton.text(), parent=self, user=self.__user, db=self.__db)
+		bufferNewOperation = createTransaction(operation_id, bufferButton.text(), parent=self, user=self.__user, db=self.__db)
 		# turn on the button after creating will be completed
 		bufferNewOperation.closed.connect(lambda: bufferButton.setEnabled(True))
 		# show the new operation window
@@ -169,7 +169,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 		pass
 
-	def reload(self, data: Iterator|Callable|None=None):
+	def reload(self, data: Iterator|Callable|list|None=None):
 		"""
 			Reload data in table
 		"""
