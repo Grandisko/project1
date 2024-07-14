@@ -312,7 +312,7 @@ class Database:
                 'id': row[0],
                 'inner': row[1],
                 'sell': row[2],
-                'client': row[3],
+                'clients': row[3],
                 'redact': row[4],
                 'super': row[5]
             }
