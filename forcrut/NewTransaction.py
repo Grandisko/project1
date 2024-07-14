@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtWidgets
-from Constants import centerWidget, Constants, generateContract
+from Constants import centerWidget, Constants, generate_contract
 from .Filter import FilterButton
 from DB.DB import Database, TABLES
 from typing import Callable, Iterator, Generator
@@ -351,7 +351,7 @@ class AbstractOperationWindow(QtWidgets.QDialog):
 				self.__operation = self.__operation | {'who': self.__user, 'datetime': datetime.now().strftime(Constants.DATETIME_DATETIME_FORMAT)}
 				print(f"emit({self.__operation})")
 				bufferText = text.replace('<h3>', '').replace('</h3>', '\n').replace('<h6>', '').replace('</h6>', '\n')
-				generate_contract(self.__operation['type'], self.__operation['operation'], self.__operation['datetime'], bufferText, to_open=True)
+				generate_contract(self.__operation['type'], self.__operation['operation'], self.__operation['datetime'], bufferText, to_open=self.contractView.isChecked())
 				QtWidgets.QMessageBox.information(self, "Успешно", "Операция прошла успешно!")
 			except Exception as err:
 				QtWidgets.QMessageBox.critical(self, "Ошибка", f"При выполнении операции возникла ошибка:\n'{err}'!")

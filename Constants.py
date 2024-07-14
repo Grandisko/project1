@@ -2,6 +2,7 @@ from PyQt5 import QtWidgets, QtCore
 from typing import Callable, Iterator
 from functools import partial
 from docxtpl import DocxTemplate
+import os
 import platform
 import subprocess
 import warnings
@@ -39,7 +40,7 @@ class Constants:
 	DATABASE_PATH = "DB/database.db"
 	# contracts
 	CONTRACTS_TEMPLATE_PATH = "templates/contract_template.docx"
-	CONTRACTS_PATH = "contracts/{}.docx"
+	CONTRACTS_PATH = "contracts/"
 
 
 # # example
@@ -114,7 +115,8 @@ def generate_contract(operation_id: int, operation_name: str, datetime: str, tex
 	# rendering .docx by the template
 	doc.render({'text': text, 'operation_name': operation_name, 'datetime': datetime})
 	# save a new contract
-	doc.save(file_path:=Constants.CONTRACTS_PATH.format(f"{operation_id}_{datetime.replace(' ', '_')}"))
+	os.makedirs(Constants.CONTRACTS_PATH, exist_ok=True)
+	doc.save(file_path:=Constants.CONTRACTS_PATH + f"{operation_id}_{datetime.replace(' ', '_')}.docx")
 	
 	if to_open:
 		match platform.system():
