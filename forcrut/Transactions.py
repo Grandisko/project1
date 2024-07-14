@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, QtCore
-from Constants import centerWidget, Constants, fill_table
+from Constants import centerWidget, Constants, fill_table, open_file
 from .Filter import FilterButton
 from typing import Generator, Iterator, Callable
 from .NewTransaction import createTransaction
@@ -160,7 +160,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
 		"""
 
-		print(source_name)
+		match source_name:
+			case "templateView":
+				open_file("templates/contract_template.docx")
+			case _:
+				pass
 
 	def retranslate(self):
 		"""

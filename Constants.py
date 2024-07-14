@@ -117,14 +117,22 @@ def generate_contract(operation_id: int, operation_name: str, datetime: str, tex
 	# save a new contract
 	os.makedirs(Constants.CONTRACTS_PATH, exist_ok=True)
 	doc.save(file_path:=Constants.CONTRACTS_PATH + f"{operation_id}_{datetime.replace(' ', '_')}.docx")
-	
+	#
 	if to_open:
-		match platform.system():
-			case "Darwin":
-				subprocess.run(["open", file_path])
-			case "Windows":
-				subprocess.run(["start", file_path], shell=True)
-			case "Linux":
-				subprocess.run(["xdg-open", file_path])
-			case _:
-				warnings.warn(OSError("Unrecognised operationg system to open contract!"))
+		open_file(file_path)
+
+
+def open_file(file_path: str):
+	"""
+		
+	"""
+	
+	match platform.system():
+		case "Darwin":
+			subprocess.run(["open", file_path])
+		case "Windows":
+			subprocess.run(["start", file_path], shell=True)
+		case "Linux":
+			subprocess.run(["xdg-open", file_path])
+		case _:
+			warnings.warn(OSError("Unrecognised operationg system to open contract!"))
