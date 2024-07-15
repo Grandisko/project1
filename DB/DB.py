@@ -389,67 +389,79 @@ class Database:
         else:
             raise ValueError(f"Unknown transaction type: {transaction_type}")
 
-    def save_transaction(self, transaction_params):
+    def add_data_from_dict(self, data_dict):
         """
-        Save a transaction to the Transactions table.
-
-        :param transaction_params: dict (transaction parameters)
+        Add data from a dictionary to the corresponding tables in the database.
+        :param db: Database object
+        :param data_dict: Dictionary with data to be added
         """
-        transaction_types = {
-            0: 'Relocate',
-            1: 'WriteOff',
-            2: 'Accept',
-            3: 'Sell'
-        }
-        type_str = transaction_types[transaction_params['type']]
-
-        ps = self._format_context(transaction_params['context'])
-
-        if 'warehouse' in transaction_params:
-            warehouse_id = transaction_params['warehouse']
-            self.cursor.execute("SELECT name FROM Warehouses WHERE id = ?", (warehouse_id,))
-            warehouse_name = self.cursor.fetchone()[0]
-            self.cursor.execute("""
-                INSERT INTO Transactions (type, who, time, PS, warehouse)
-                VALUES (?, ?, ?, ?, ?)
-            """, (type_str, transaction_params['who'], transaction_params['datetime'], ps, warehouse_name))
-        elif 'client' in transaction_params:
-            client_id = transaction_params['client']
-            self.cursor.execute("SELECT name FROM Clients WHERE id = ?", (client_id,))
-            client_name = self.cursor.fetchone()[0]
-            self.cursor.execute("""
-                INSERT INTO Transactions (type, who, time, PS, client)
-                VALUES (?, ?, ?, ?, ?)
-            """, (type_str, transaction_params['who'], transaction_params['datetime'], ps, client_name))
-        else:
-            self.cursor.execute("""
-                INSERT INTO Transactions (type, who, time, PS)
-                VALUES (?, ?, ?, ?)
-            """, (type_str, transaction_params['who'], transaction_params['datetime'], ps))
-
+        if data_dict['type'] == 0:  # Relocate
+            transaction_type = 'elocate'
+            who = data_dict['who']
+            datetime = data_dict['datetime']
+            for context in data_dict['context']:
+                from_wh = context['from']
+                to_wh = context['to']
+                for good_id, count in context.items():
+                    if good_id != 'from' and good_id != 'to':
+                        self.cursor.execute("INSERT INTO Transactions (type, who, time) VALUES (?,?,?)",
+                                          (transaction_type, who, datetime))
+                        transaction_id = self.cursor.lastrowid
+                        self.cursor.execute(
+                            "INSERT INTO Transportation (transaction_id, from_wh_id, to_wh_id) VALUES (?,?,?)",
+                            (transaction_id, from_wh, to_wh))
+                        transportation_id = self.cursor.lastrowid
+                        self.cursor.execute(
+                            "INSERT INTO TransportationData (good_id, transportation_id, count) VALUES (?,?,?)",
+                            (good_id, transportation_id, count))
+        elif data_dict['type'] == 1:  # WriteOff
+            transaction_type = 'write_off'
+            who = data_dict['who']
+            datetime = data_dict['datetime']
+            for context in data_dict['context']:
+                from_wh = context['from']
+                for good_id, count in context.items():
+                    if good_id != 'from':
+                        self.cursor.execute("INSERT INTO Transactions (type, who, time) VALUES (?,?,?)",
+                                          (transaction_type, who, datetime))
+                        transaction_id = self.cursor.lastrowid
+                        self.cursor.execute("INSERT INTO WriteOff (transaction_id, from_wh_id) VALUES (?,?)",
+                                          (transaction_id, from_wh))
+                        write_off_id = self.cursor.lastrowid
+                        self.cursor.execute("INSERT INTO WriteOffData (good_id, write_of_id, count) VALUES (?,?,?)",
+                                          (good_id, write_off_id, count))
+        elif data_dict['type'] == 2:  # Accept
+            transaction_type = 'accept'
+            who = data_dict['who']
+            datetime = data_dict['datetime']
+            warehouse_id = data_dict['warehouse']
+            for good_id, count in data_dict['context'].items():
+                self.cursor.execute("INSERT INTO Transactions (type, who, time) VALUES (?,?,?)",
+                                  (transaction_type, who, datetime))
+                transaction_id = self.cursor.lastrowid
+                self.cursor.execute("INSERT INTO Acceptance (transaction_id, to_wh) VALUES (?,?)",
+                                  (transaction_id, warehouse_id))
+                acceptance_id = self.cursor.lastrowid
+                self.cursor.execute("INSERT INTO AcceptanceData (good_id, acceptance_id, count) VALUES (?,?,?)",
+                                  (good_id, acceptance_id, count))
+        elif data_dict['type'] == 3:  # Sell
+            transaction_type = 'ell'
+            who = data_dict['who']
+            datetime = data_dict['datetime']
+            client_id = data_dict['client']
+            for context in data_dict['context']:
+                from_wh = context['from']
+                for good_id, count in context.items():
+                    if good_id != 'from':
+                        self.cursor.execute("INSERT INTO Transactions (type, who, time) VALUES (?,?,?)",
+                                          (transaction_type, who, datetime))
+                        transaction_id = self.cursor.lastrowid
+                        self.cursor.execute("INSERT INTO Sell (transaction_id, client_id, from_wh_id) VALUES (?,?,?)",
+                                          (transaction_id, client_id, from_wh))
+                        sell_id = self.cursor.lastrowid
+                        self.cursor.execute("INSERT INTO SellData (good_id, sell_id, count) VALUES (?,?,?)",
+                                          (good_id, sell_id, count))
         self.conn.commit()
-
-    def _format_context(self, context):
-        """
-        Format the transaction context as a string.
-
-        :param context: dict (transaction-specific context)
-        :return: str
-        """
-        if isinstance(context, dict):
-            result = []
-            for k, v in context.items():
-                if isinstance(k, int):  # assume k is an ID
-                    self.cursor.execute("SELECT name FROM Goods WHERE id = ?", (k,))
-                    item_name = self.cursor.fetchone()[0]
-                    result.append(f"{item_name}: {v}")
-                else:
-                    result.append(f"{k}: {v}")
-            return ', '.join(result)
-        elif isinstance(context, list):
-            return ', '.join(self._format_context(item) for item in context)
-        else:
-            raise ValueError("Invalid context format")
     def close(self):
         self.conn.close()
 
