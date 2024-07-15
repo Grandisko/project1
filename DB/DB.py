@@ -388,6 +388,68 @@ class Database:
             return 'OPERATION_SELL'
         else:
             raise ValueError(f"Unknown transaction type: {transaction_type}")
+
+    def save_transaction(self, transaction_params):
+        """
+        Save a transaction to the Transactions table.
+
+        :param transaction_params: dict (transaction parameters)
+        """
+        transaction_types = {
+            0: 'Relocate',
+            1: 'WriteOff',
+            2: 'Accept',
+            3: 'Sell'
+        }
+        type_str = transaction_types[transaction_params['type']]
+
+        ps = self._format_context(transaction_params['context'])
+
+        if 'warehouse' in transaction_params:
+            warehouse_id = transaction_params['warehouse']
+            self.cursor.execute("SELECT name FROM Warehouses WHERE id = ?", (warehouse_id,))
+            warehouse_name = self.cursor.fetchone()[0]
+            self.cursor.execute("""
+                INSERT INTO Transactions (type, who, time, PS, warehouse)
+                VALUES (?, ?, ?, ?, ?)
+            """, (type_str, transaction_params['who'], datetime.datetime.now(), ps, warehouse_name))
+        elif 'client' in transaction_params:
+            client_id = transaction_params['client']
+            self.cursor.execute("SELECT name FROM Clients WHERE id = ?", (client_id,))
+            client_name = self.cursor.fetchone()[0]
+            self.cursor.execute("""
+                INSERT INTO Transactions (type, who, time, PS, client)
+                VALUES (?, ?, ?, ?, ?)
+            """, (type_str, transaction_params['who'], datetime.datetime.now(), ps, client_name))
+        else:
+            self.cursor.execute("""
+                INSERT INTO Transactions (type, who, time, PS)
+                VALUES (?, ?, ?, ?)
+            """, (type_str, transaction_params['who'], datetime.datetime.now(), ps))
+
+        self.conn.commit()
+
+    def _format_context(self, context):
+        """
+        Format the transaction context as a string.
+
+        :param context: dict (transaction-specific context)
+        :return: str
+        """
+        if isinstance(context, dict):
+            result = []
+            for k, v in context.items():
+                if isinstance(k, int):  # assume k is an ID
+                    self.cursor.execute("SELECT name FROM Items WHERE id = ?", (k,))
+                    item_name = self.cursor.fetchone()[0]
+                    result.append(f"{item_name}: {v}")
+                else:
+                    result.append(f"{k}: {v}")
+            return ', '.join(result)
+        elif isinstance(context, list):
+            return ', '.join(self._format_context(item) for item in context)
+        else:
+            raise ValueError("Invalid context format")
     def close(self):
         self.conn.close()
 
