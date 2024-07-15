@@ -2,8 +2,9 @@ import random
 import datetime
 import time
 from DB.DB import Database
-db = Database("database.db")
-db.create_tables()
+from Constants import Constants
+db = Database()
+# db.create_tables()
 
 MINTIME = datetime.datetime(2023,8,6,8,14,59)
 MAXTIME = datetime.datetime(2024,8,6,8,14,59)
@@ -18,7 +19,7 @@ for i in range(50):
     articul = f"articul{i}"
     name = f"good{i}"
     price = random.randint(10, 100)
-    ex_time = datetime.datetime.fromtimestamp(random.randint(mintime_ts, maxtime_ts)).strftime("%Y-%m-%d %H:%M:%S")
+    ex_time = datetime.datetime.fromtimestamp(random.randint(mintime_ts, maxtime_ts)).strftime(Constants.DATETIME_DATETIME_FORMAT)
     img = f"img{i}"
     goods.append((articul, name, price, ex_time, img))
 db.cursor.executemany("INSERT INTO Goods (articul, name, price, ex_time, img) VALUES (?,?,?,?,?)", goods)
@@ -41,7 +42,7 @@ for i in range(50):
     good_id = random.randint(1, 10)
     warehouse_id = random.randint(1, 5)
     count = random.randint(1, 10)
-    expire_date = "2022-01-01"
+    expire_date = datetime.datetime.fromtimestamp(random.randint(mintime_ts, maxtime_ts)).strftime(Constants.DATETIME_DATETIME_FORMAT)
     goods_warehouse.append((good_id, warehouse_id, count, expire_date))
 db.cursor.executemany("INSERT INTO GoodsWarehouse (good_id, warehouse_id, count, expire_date) VALUES (?,?,?,?)", goods_warehouse)
 db.conn.commit()
@@ -85,7 +86,7 @@ transactions = []
 for i in range(50):
     type = random.choice(["sell", "buy"])
     who = random.randint(1, 10)
-    time = "2022-01-01"
+    time = datetime.datetime.fromtimestamp(random.randint(mintime_ts, maxtime_ts)).strftime(Constants.DATETIME_DATETIME_FORMAT)
     PS = f"PS{i}"
     transactions.append((type, who, time, PS))
 db.cursor.executemany("INSERT INTO Transactions (type, who, time, PS) VALUES (?,?,?,?)", transactions)
@@ -107,7 +108,7 @@ for i in range(50):
     good_id = random.randint(1, 10)
     transportation_id = random.randint(1, 10)
     count = random.randint(1, 10)
-    expire_date = "2022-01-01"
+    expire_date = datetime.datetime.fromtimestamp(random.randint(mintime_ts, maxtime_ts)).strftime(Constants.DATETIME_DATETIME_FORMAT)
     transportation_data.append((good_id, transportation_id, count, expire_date))
 db.cursor.executemany("INSERT INTO TransportationData (good_id, transportation_id, count, expire_date) VALUES (?,?,?,?)", transportation_data)
 db.conn.commit()
@@ -117,7 +118,7 @@ for i in range(50):
     good_id = random.randint(1, 10)
     acceptance_id = random.randint(1, 10)
     count = random.randint(1, 10)
-    expire_date = "2022-01-01"
+    expire_date = datetime.datetime.fromtimestamp(random.randint(mintime_ts, maxtime_ts)).strftime(Constants.DATETIME_DATETIME_FORMAT)
     acceptance_data.append((good_id, acceptance_id, count, expire_date))
 db.cursor.executemany("INSERT INTO AcceptanceData (good_id, acceptance_id, count, expire_date) VALUES (?,?,?,?)", acceptance_data)
 db.conn.commit()
@@ -137,7 +138,7 @@ for i in range(50):
     good_id = random.randint(1, 10)
     sell_id = random.randint(1, 10)
     count = random.randint(1, 10)
-    expire_date = "2022-01-01"
+    expire_date = datetime.datetime.fromtimestamp(random.randint(mintime_ts, maxtime_ts)).strftime(Constants.DATETIME_DATETIME_FORMAT)
     sell_data.append((good_id, sell_id, count, expire_date))
 db.cursor.executemany("INSERT INTO SellData (good_id, sell_id, count, expire_date) VALUES (?,?,?,?)", sell_data)
 db.conn.commit()
@@ -157,7 +158,7 @@ for i in range(50):
     good_id = random.randint(1, 10)
     write_of_id = random.randint(1, 10)
     count = random.randint(1, 10)
-    expire_date = "2022-01-01"
+    expire_date = datetime.datetime.fromtimestamp(random.randint(mintime_ts, maxtime_ts)).strftime(Constants.DATETIME_DATETIME_FORMAT)
     write_off_data.append((good_id, write_of_id, count, expire_date))
 db.cursor.executemany("INSERT INTO WriteOffData (good_id, write_of_id, count, expire_date) VALUES (?,?,?,?)", write_off_data)
 db.conn.commit()
