@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
-from .Constants import centerWidget, Constants
+from Constants import centerWidget, Constants
 from functools import partial
 from functools import cmp_to_key
 import re
@@ -17,7 +17,7 @@ class FilterButton(QtWidgets.QToolButton):
 
 	filtered = QtCore.pyqtSignal(object)
 
-	def __init__(self, text: str, columns: dict, table: QtWidgets.QTableWidget|None, parent: QtCore.QObject | None=None, handler: Callable[[QtCore.QObject, dict], Any]|None=None) -> None:
+	def __init__(self, text: str, columns: dict, table: QtWidgets.QTableWidget|None, parent: QtCore.QObject|None=None, handler: Callable[[QtCore.QObject, dict], Any]|None=None) -> None:
 		"""
 			:param text: label text for button
 			:param columns: dict of keys (columns' names) and values (their data types)
@@ -25,7 +25,7 @@ class FilterButton(QtWidgets.QToolButton):
 			:param parent: parent QObject for filter button,
 			:param handler: function, which takes filtered data
 		"""
-		
+
 		super().__init__()
 		# two types filtering data and others necessary variables 
 		self.__table = table
@@ -35,8 +35,7 @@ class FilterButton(QtWidgets.QToolButton):
 		self.conditionsWidget = None
 		# QToolButton settings
 		self.setText(text)
-		if not parent is None:
-			self.setParent(parent)
+		self.setParent(parent)
 		# form popup menu for the filter button
 		menu = QtWidgets.QMenu()
 		menu.addAction('Сортировать').triggered.connect(self.sortDataMenu)
@@ -44,6 +43,20 @@ class FilterButton(QtWidgets.QToolButton):
 		# menu setting
 		self.setMenu(menu)
 		self.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+
+	# def setParent(self, parent: QtCore.QObject) -> None:
+	# 	"""
+
+	# 	"""
+
+	# 	super().setParent(parent)
+
+	def setColumns(self, columns: dict):
+		"""
+			Sets columns
+		"""
+
+		self.__columns = columns
 
 	def sortDataMenu(self) -> None:
 		"""
@@ -73,6 +86,19 @@ class FilterButton(QtWidgets.QToolButton):
 		"""
 
 		self.filtered.emit(data)
+
+	def closeEvent(self, event) -> None:
+		"""
+			Handler closing event
+		"""
+
+		# close sorting widget if it exists
+		if not self.sortingWidget is None:
+			self.sortingWidget.close()
+
+		# close conditions widget if it exists
+		if not self.conditionsWidget is None:
+			self.conditionsWidget.close()
 
 
 class AbstractFilterWidget(QtWidgets.QDialog):
@@ -167,7 +193,10 @@ class SortingWidget(AbstractFilterWidget):
 			bufferElem.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
 			self.gridLayout.addWidget(bufferElem, 0, j, QtCore.Qt.AlignCenter)
 		# filling the settings
-		for i, column in enumerate(columns, start=1):
+		for i, (column, column_type) in enumerate(columns.items(), start=1):
+			# TODO difficult to process
+			# if column_type == -1:
+			# 	pass
 			# column label
 			bufferElem = QtWidgets.QLabel(column, parent=self.gridWidget)
 			bufferElem.setWordWrap(True)
@@ -176,6 +205,7 @@ class SortingWidget(AbstractFilterWidget):
 			bufferElem = QtWidgets.QButtonGroup(self.gridWidget)
 			self.gridLayout.addWidget(spinBox:=QtWidgets.QSpinBox(self.gridWidget), i, 1, QtCore.Qt.AlignCenter)
 			spinBox.setRange(0, 0)
+			spinBox.setAlignment(QtCore.Qt.AlignCenter)
 			spinBox.setEnabled(False)
 			spinBox.valueChanged.connect(partial(self.updateSortOrder, i-1))
 			self.options.append([spinBox, bufferElem])
@@ -242,12 +272,16 @@ class SortingWidget(AbstractFilterWidget):
 						case Constants.TEXT:
 							bufferDate1, bufferDate2 = row1[index], row2[index]
 						case Constants.DATETIME:
-							bufferDate1 = QtCore.QDateTime.fromString(row1[index], Constants.DATETIME_FORMAT)
+							bufferDate1 = QtCore.QDateTime.fromString(row1[index], Constants.PYQT_DATETIME_FORMAT)
 							if bufferDate1.isNull():
-								raise Exception(f"Unreadable date {row1[index]} (required format: {Constants.DATETIME_FORMAT})")
-							bufferDate2 = QtCore.QDateTime.fromString(row2[index], Constants.DATETIME_FORMAT)
+								raise Exception(f"Unreadable date {row1[index]} (required format: {Constants.PYQT_DATETIME_FORMAT})")
+							bufferDate2 = QtCore.QDateTime.fromString(row2[index], Constants.PYQT_DATETIME_FORMAT)
 							if bufferDate2.isNull():
-								raise Exception(f"Unreadable date {row2[index]} (required format: {Constants.DATETIME_FORMAT})")
+								raise Exception(f"Unreadable date {row2[index]} (required format: {Constants.PYQT_DATETIME_FORMAT})")
+						case _:
+							# TODO ignore unrecognised type of data
+							pass
+							# raise Exception(f"ConditionsWidget: 'Unrecognised column {columnType}'")
 					if bufferDate1 == bufferDate2:
 						continue
 					match instruction['option']:
@@ -349,7 +383,9 @@ class ConditionsWidget(AbstractFilterWidget):
 						inputDate.setDateTime(Constants.DATETIME_DEFAULT)
 						self.gridLayout.addWidget(optionWidget, i, j, QtCore.Qt.AlignCenter)
 				case _:
-					raise Exception(f"ConditionsWidget: 'Unrecognised column {columnType}'")
+					# TODO ignore unrecognised type of data
+					pass
+					# raise Exception(f"ConditionsWidget: 'Unrecognised column {columnType}'")
 
 	def acceptFilter(self, table: QtWidgets.QTableWidget, handler: Callable[[QtCore.QObject, dict], None]|None=None) -> None:
 		"""
@@ -401,8 +437,8 @@ class ConditionsWidget(AbstractFilterWidget):
 								return False
 						case Constants.DATETIME:
 							# check for invalid date format
-							if (buffer:=QtCore.QDateTime.fromString(row[instruction['id'] + 1], Constants.DATETIME_FORMAT)).isNull():
-								raise Exception(f"Unreadable date {row[instruction['id'] + 1]} (required format: {Constants.DATETIME_FORMAT})")
+							if (buffer:=QtCore.QDateTime.fromString(row[instruction['id'] + 1], Constants.PYQT_DATETIME_FORMAT)).isNull():
+								raise Exception(f"Unreadable date {row[instruction['id'] + 1]} (required format: {Constants.PYQT_DATETIME_FORMAT})")
 
 							if not (instruction['options'][0] is None) and instruction['options'][0].isValid() and buffer < instruction['options'][0]:
 								return False

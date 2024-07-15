@@ -1,5 +1,11 @@
 from PyQt5 import QtWidgets, QtCore
 from typing import Callable, Iterator
+from functools import partial
+from docxtpl import DocxTemplate
+import os
+import platform
+import subprocess
+import warnings
 
 """
 	static functions and Constants
@@ -28,13 +34,17 @@ class Constants:
 	DATA_TYPES = {0: 'TEXT', 1: 'NUMERIC', 2: 'DATETIME', 3: 'FOREIGN_KEY', 4: 'PRIMARY_KEY', 5: 'BOOL'}
 	# datetime
 	DATETIME_DEFAULT = QtCore.QDateTime(2000, 1, 1, 0, 0)
-	DATETIME_FORMAT = "dd.MM.yyyy HH:mm:ss"
+	PYQT_DATETIME_FORMAT = "dd.MM.yyyy HH:mm:ss"
+	DATETIME_DATETIME_FORMAT = "%d.%m.%Y %H:%M:%S"
 	# database
 	DATABASE_PATH = "DB/database.db"
+	# contracts
+	CONTRACTS_TEMPLATE_PATH = "templates/contract_template.docx"
+	CONTRACTS_PATH = "contracts/"
 
 
-# example
-COLUMNS = {'col1': Constants.TEXT, 'col2': Constants.NUMERIC, 'col3': Constants.DATETIME}
+# # example
+# COLUMNS = {'col1': Constants.TEXT, 'col2': Constants.NUMERIC, 'col3': Constants.DATETIME}
 
 
 def centerWidget(width: int, height: int) -> tuple[int]:
@@ -45,10 +55,17 @@ def centerWidget(width: int, height: int) -> tuple[int]:
 	bufferElem = QtWidgets.QApplication.desktop()
 	return int((bufferElem.width() - width)/2), int((bufferElem.height() - height)/2), width, height
 
-def fill_table(columns: dict, data: Callable|Iterator|list, table: QtWidgets.QTableWidget):
+def fill_table(columns: dict, data: Callable|Iterator|list, table: QtWidgets.QTableWidget, counter: bool=False, counter_vals: dict|None=None, counter_handler: Callable|None=None):
 	"""
 
 	"""
+
+	counter_limit_at = None
+	if counter:
+		columns = columns.copy()
+		columns |= {'counter': -1}
+		if columns.get('count', -1) != -1:
+			counter_limit_at = list(columns.keys()).index('count') + 1
 
 	# set table's dimensions
 	table.setColumnCount(len(columns))
@@ -76,3 +93,46 @@ def fill_table(columns: dict, data: Callable|Iterator|list, table: QtWidgets.QTa
 			item = QtWidgets.QTableWidgetItem(str(item))
 			item.setTextAlignment(QtCore.Qt.AlignCenter)
 			table.setItem(i, j, item)
+		if counter:
+			item = QtWidgets.QSpinBox(table)
+			if not counter_limit_at is None:
+				item.setRange(0, int(rowData[counter_limit_at]))
+			# TODO тут указать ограничение по умолчанию
+			if not counter_vals is None:
+				item.setValue(counter_vals.get(int(rowData[0]), 0))
+			item.setAlignment(QtCore.Qt.AlignCenter)
+			if not counter_handler is None:
+				item.valueChanged.connect(partial(counter_handler, rowData[0]))
+			table.setCellWidget(i, j + 1, item)
+
+def generate_contract(operation_id: int, operation_name: str, datetime: str, text: dict, to_open: bool=True):
+	"""
+
+	"""
+	
+	# load a template
+	doc = DocxTemplate(Constants.CONTRACTS_TEMPLATE_PATH)
+	# rendering .docx by the template
+	doc.render({'text': text, 'operation_name': operation_name, 'datetime': datetime})
+	# save a new contract
+	os.makedirs(Constants.CONTRACTS_PATH, exist_ok=True)
+	doc.save(file_path:=Constants.CONTRACTS_PATH + f"{operation_id}_{datetime.replace(' ', '_')}.docx")
+	#
+	if to_open:
+		open_file(file_path)
+
+
+def open_file(file_path: str):
+	"""
+		
+	"""
+	
+	match platform.system():
+		case "Darwin":
+			subprocess.run(["open", file_path])
+		case "Windows":
+			subprocess.run(["start", file_path], shell=True)
+		case "Linux":
+			subprocess.run(["xdg-open", file_path])
+		case _:
+			warnings.warn(OSError("Unrecognised operationg system to open contract!"))
