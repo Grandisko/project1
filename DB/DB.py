@@ -412,7 +412,7 @@ class Database:
             self.cursor.execute("""
                 INSERT INTO Transactions (type, who, time, PS, warehouse)
                 VALUES (?, ?, ?, ?, ?)
-            """, (type_str, transaction_params['who'], datetime.datetime.now(), ps, warehouse_name))
+            """, (type_str, transaction_params['who'], transaction_params['datetime'], ps, warehouse_name))
         elif 'client' in transaction_params:
             client_id = transaction_params['client']
             self.cursor.execute("SELECT name FROM Clients WHERE id = ?", (client_id,))
@@ -420,12 +420,12 @@ class Database:
             self.cursor.execute("""
                 INSERT INTO Transactions (type, who, time, PS, client)
                 VALUES (?, ?, ?, ?, ?)
-            """, (type_str, transaction_params['who'], datetime.datetime.now(), ps, client_name))
+            """, (type_str, transaction_params['who'], transaction_params['datetime'], ps, client_name))
         else:
             self.cursor.execute("""
                 INSERT INTO Transactions (type, who, time, PS)
                 VALUES (?, ?, ?, ?)
-            """, (type_str, transaction_params['who'], datetime.datetime.now(), ps))
+            """, (type_str, transaction_params['who'], transaction_params['datetime'], ps))
 
         self.conn.commit()
 
@@ -440,7 +440,7 @@ class Database:
             result = []
             for k, v in context.items():
                 if isinstance(k, int):  # assume k is an ID
-                    self.cursor.execute("SELECT name FROM Items WHERE id = ?", (k,))
+                    self.cursor.execute("SELECT name FROM Goods WHERE id = ?", (k,))
                     item_name = self.cursor.fetchone()[0]
                     result.append(f"{item_name}: {v}")
                 else:
