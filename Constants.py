@@ -7,14 +7,10 @@ import platform
 import subprocess
 import warnings
 
-"""
-	static functions and Constants
-"""
-
 
 class Constants:
 	"""
-		Constants
+		Application variables
 	"""
 
 	# operations
@@ -43,11 +39,7 @@ class Constants:
 	CONTRACTS_PATH = "contracts/"
 
 
-# # example
-# COLUMNS = {'col1': Constants.TEXT, 'col2': Constants.NUMERIC, 'col3': Constants.DATETIME}
-
-
-def centerWidget(width: int, height: int) -> tuple[int]:
+def center_widget(width: int, height: int) -> tuple[int]:
 	"""
 		Center widget on the desktop 
 	"""
@@ -57,9 +49,15 @@ def centerWidget(width: int, height: int) -> tuple[int]:
 
 def fill_table(columns: dict, data: Callable|Iterator|list, table: QtWidgets.QTableWidget, counter: bool=False, counter_vals: dict|None=None, counter_handler: Callable|None=None):
 	"""
-
+		Fills table accroding to the data input
+		:param columns: dict {column name: columns type from Constants, ...}
+		:param data: object with data to fill the table
+		:param table: the table itself
+		:param couter: whether to add a counter at the end of each line
+		:param counter_handler: counter handler
 	"""
 
+	# counter settings
 	counter_limit_at = None
 	if counter:
 		columns = columns.copy()
@@ -97,7 +95,7 @@ def fill_table(columns: dict, data: Callable|Iterator|list, table: QtWidgets.QTa
 			item = QtWidgets.QSpinBox(table)
 			if not counter_limit_at is None:
 				item.setRange(0, int(rowData[counter_limit_at]))
-			# TODO тут указать ограничение по умолчанию
+			# here one can set upper bound
 			if not counter_vals is None:
 				item.setValue(counter_vals.get(int(rowData[0]), 0))
 			item.setAlignment(QtCore.Qt.AlignCenter)
@@ -107,7 +105,12 @@ def fill_table(columns: dict, data: Callable|Iterator|list, table: QtWidgets.QTa
 
 def generate_contract(operation_id: int, operation_name: str, datetime: str, text: dict, to_open: bool=True):
 	"""
-
+		Creates .docx with content, name of the file is '{operation_id}_{datetime without spaces}.docx'
+		:param operation_id: operation index from Constants
+		:param operation_name: name of the operation
+		:param datetime: datetime of the completed operation
+		:param text: content of the file
+		:param to_open: whether is needed file opening
 	"""
 	
 	# load a template
@@ -117,16 +120,18 @@ def generate_contract(operation_id: int, operation_name: str, datetime: str, tex
 	# save a new contract
 	os.makedirs(Constants.CONTRACTS_PATH, exist_ok=True)
 	doc.save(file_path:=Constants.CONTRACTS_PATH + f"{operation_id}_{datetime.replace(' ', '_')}.docx")
-	#
+	# open the created file if necessary
 	if to_open:
 		open_file(file_path)
 
 
 def open_file(file_path: str):
 	"""
-		
+		Opens file at file_path, opening errors are not processed
+		:param file_path: path to the file
 	"""
 	
+	# check os
 	match platform.system():
 		case "Darwin":
 			subprocess.run(["open", file_path])

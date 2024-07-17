@@ -1,12 +1,12 @@
 from PyQt5 import QtCore, QtWidgets
-from Constants import centerWidget, Constants, generate_contract
+from Constants import center_widget, Constants, generate_contract
 from .Filter import FilterButton
 from DB.DB import Database, TABLES
 from typing import Callable, Iterator, Generator
 from datetime import datetime
 
 
-def createTransaction(operation_id: int, operation_name: str, user: int, db: Database, parent: QtCore.QObject|None=None) -> QtWidgets.QDialog:
+def create_transaction(operation_id: int, operation_name: str, user: int, db: Database, parent: QtCore.QObject|None=None) -> QtWidgets.QDialog:
 	"""
 		Function that creates window with new transaction's settings according to the type of the operation to be created
 	"""
@@ -43,7 +43,7 @@ class ConfirmCreatingBox(QtWidgets.QDialog):
 		# QDialog settings
 		super().__init__(parent)
 		self.setWindowTitle(title)
-		self.setGeometry(*centerWidget(550, 200))
+		self.setGeometry(*center_widget(550, 200))
 		# main layout
 		bufferLayout = QtWidgets.QVBoxLayout(self)
 		# information of the box
@@ -83,7 +83,7 @@ class AbstractOperationWindow(QtWidgets.QDialog):
 	"""
 
 	closed = QtCore.pyqtSignal()
-	# newTransaction = QtCore.pyqtSignal()  # TODO нужен ли он вообще
+	newTransaction = QtCore.pyqtSignal()
 
 	def __init__(self, operation_id: int, operation_name: str, user: int, db: Database, parent: QtCore.QObject|None=None) -> None:
 		"""
@@ -98,7 +98,7 @@ class AbstractOperationWindow(QtWidgets.QDialog):
 		super().__init__(parent)
 		# QDialog settings
 		self.setWindowTitle("Новая транзакция")
-		self.setGeometry(*centerWidget(800, 600))
+		self.setGeometry(*center_widget(800, 600))
 		# necessary variables
 		self.__operation = dict()
 		self.__operation['operation'] = ' '.join(operation_name.lower().split())
@@ -313,7 +313,8 @@ class AbstractOperationWindow(QtWidgets.QDialog):
 	def new_table(self, table_id: int, parent: QtCore.QObject|None=None) -> QtWidgets.QTableWidget:
 		"""
 			Creates new empty table
-			:param table_id: integer that's used as object name for the table
+			:param table_id: integer that's used as object name for the table,
+			:param parent: parent QObject for new table
 		"""
 
 		# form the table
@@ -324,17 +325,12 @@ class AbstractOperationWindow(QtWidgets.QDialog):
 		bufferTable.setWordWrap(True)
 		# adaptability of the table
 		bufferTable.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-		# TODO troubles with rows to contents
-		# bufferTable.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-		# bufferTable.resizeRowsToContents()
-		# bufferTable.resizeColumnsToContents()
-		# bufferTable.update()
 
 		return bufferTable
 
 	def acceptCreating(self, text: str):
 		"""
-			Handler Ok button, which creates new transactions
+			Processes Ok button, which creates new transactions
 			:param text: message of the confirm box question
 		"""
 		
@@ -346,10 +342,9 @@ class AbstractOperationWindow(QtWidgets.QDialog):
 		if reply:
 			# error is occured -> critical box with it
 			try:
-				# raise Exception("Something went wrong")
-				# TODO отправка данных для создания транзакции
 				self.__operation = self.__operation | {'who': self.__user, 'datetime': datetime.now().strftime(Constants.DATETIME_DATETIME_FORMAT)}
-				print(f"emit({self.__operation})")
+				self.__db.add_data_from_dict(self.__operation)
+				self.newTransaction.emit()
 				bufferText = text.replace('<h3>', '').replace('</h3>', '\n').replace('<h6>', '').replace('</h6>', '\n')
 				generate_contract(self.__operation['type'], self.__operation['operation'], self.__operation['datetime'], bufferText, to_open=self.contractView.isChecked())
 				QtWidgets.QMessageBox.information(self, "Успешно", "Операция прошла успешно!")
@@ -378,6 +373,6 @@ class AbstractOperationWindow(QtWidgets.QDialog):
 if __name__ == '__main__':
 	import sys
 	app = QtWidgets.QApplication(sys.argv)
-	window = OperationWindow()
+	window = AbstractOperationWindow()
 	window.show()
 	sys.exit(app.exec_())
