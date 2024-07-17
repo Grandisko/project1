@@ -1,15 +1,7 @@
 from PyQt5 import QtWidgets, QtCore
-from Constants import centerWidget
+from Constants import center_widget
 from .Transactions import MainWindow as Transactions
 from DB.DB import TABLES, Database
-
-
-def LogIn(login: str, password: str) -> dict | None:
-	"""
-		Immitation of login and password verification
-	"""
-	
-	return {'inner': True, 'sell': True, 'clients': True, 'redact': True, 'super': True}
 
 
 class AuthorizationWindow(QtWidgets.QDialog):
@@ -22,7 +14,7 @@ class AuthorizationWindow(QtWidgets.QDialog):
 		super().__init__()
 		# QDialog settings
 		self.setWindowTitle("Вход в систему")
-		self.setGeometry(*centerWidget(400, 300))
+		self.setGeometry(*center_widget(400, 300))
 		# database
 		self.__db = Database()
 		# widget for a 'log in' field
@@ -81,14 +73,16 @@ class AuthorizationWindow(QtWidgets.QDialog):
 			Confirm the received login and password
 		"""
 
-		# response = self.__db.get_admin_params(self.loginInput.text(), self.passwordInput.text())
-		response = self.__db.get_admin_params("admin26", "password26")  # TODO убрать при релизе
+		# get input data
+		response = self.__db.get_admin_params(self.loginInput.text(), self.passwordInput.text())
+		# check response
 		if response is None:
 			self.passwordInput.clear()
 			self.warning.setText("<b style='color: red'>Введенный логин или пароль не привязан ни к какому аккаунту. Введите правильные данные.</b>")
 			return
 		bufferColumns = TABLES['Transactions']
 		bufferColumns.pop('id')
+		# create main window
 		self.window = Transactions(response.pop('id'), response, bufferColumns, db=self.__db)
 		self.close()
 		self.window.show()

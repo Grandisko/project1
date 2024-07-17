@@ -15,6 +15,7 @@ class SellingContextKey(dict):
 			:param wr_from: warehouse id indicating which goods to sell from
 		"""
 
+		super().__init__()
 		self['from'] = wr_from
 
 	def __hash__(self):
@@ -34,7 +35,7 @@ class SellingContextKey(dict):
 
 class OperationSell(AbstractOperationWindow):
 	"""
-
+		Creating window of the operation Sell
 	"""
 
 	def init_widget(self):
@@ -42,8 +43,9 @@ class OperationSell(AbstractOperationWindow):
 			Fills tables according to the operaion template
 		"""
 
+		# info filed
 		self.operationInfo.appendPlainText("Клиент:\nСо склада:")
-		
+		# necessary variables
 		self.__db = self.__getattribute__(f'_{self.__class__.__bases__[0].__name__}__db')
 		self.__operation = self.__getattribute__(f'_{self.__class__.__bases__[0].__name__}__operation')
 		self.__operation_full_context = self.__getattribute__(f'_{self.__class__.__bases__[0].__name__}__operation_full_context')
@@ -51,57 +53,62 @@ class OperationSell(AbstractOperationWindow):
 		self.__client = -1
 		self.__warehouse = -1
 		self.__info_fields = self.__getattribute__(f'_{self.__class__.__bases__[0].__name__}__info_fields') | {0: 'Клиент', 1: 'Со склада'}
-
+		# filter button settings
 		self.filterButton.setColumns(self.columns['warehouse_goods'])
 		self.tables[0].getData = lambda: self.getData(self.tables[0], len(self.columns['warehouse_goods']))
-
+		# combo boxes settings
 		self.combo_boxes[0].addItem("Выбирете клиента", userData=self.__client)
 		self.combo_boxes[0].currentIndexChanged.connect(self.clientSelected)
 		for bufferRow in self.__db.get_clients():
 			self.combo_boxes[0].addItem(' '.join(map(str, bufferRow[1:])), userData=bufferRow[0])
-
 		self.combo_boxes[1].addItem("Выбирете склад", userData=self.__warehouse)
 		self.combo_boxes[1].currentIndexChanged.connect(self.warehouseSelected)
 		for bufferRow in self.__db.get_warehouses():
 			self.combo_boxes[1].addItem(' '.join(map(str, bufferRow[1:])), userData=bufferRow[0])
-
+		# fill buffer-table and set tables' settings
 		self.tables[0].cellDoubleClicked.connect(self.onGoodsDoubleClicked)
 		fill_table(self.columns['warehouse_goods'], [], self.tables[1])
 		self.tables[1].cellDoubleClicked.connect(self.onRemoveGood)
 
 	def reload(self, data: Iterator|Callable|list|None=None):
 		"""
-
+			Reload data in table
+			:param data: object with data to fill into table
 		"""
 
+		# skip action
 		if self.__warehouse == -1:
 			return
-
+		# fill empty variable data
 		if data is None:
 			data = self.__buffer[self.__warehouse]
-
+		# fill the table
 		fill_table(self.columns['warehouse_goods'], data, self.tables[0], counter=True)
 
 	def clientSelected(self, row: int):
 		"""
-
+			Process logic after client was selected
+			:param row: client row index in the table
 		"""
 
+		# edit info about operation
 		self.__client = self.combo_boxes[0].currentData()
 		self.edit_info(self.__info_fields[0], '' if self.__client == -1 else self.combo_boxes[0].itemText(row))
 
 	def warehouseSelected(self, row: int):
 		"""
-
+			Process logic after warehouse was selected
+			:param row: warehouse row index in the combo box
 		"""
 
+		# edit info about operation
 		self.__warehouse = self.combo_boxes[1].currentData()
 		self.edit_info(self.__info_fields[1], '' if self.__warehouse == -1 else self.combo_boxes[1].itemText(row))
-		#
+		# skip action
 		if self.__warehouse == -1:
 			self.hide_content()
 			return
-		#
+		# fill the table
 		if self.__buffer.get(self.__warehouse, None) is None:
 			self.__buffer[self.__warehouse] = list(map(list, self.__db.get_warehouse_goods(self.__warehouse)))
 		fill_table(self.columns['warehouse_goods'], self.__buffer[self.__warehouse], self.tables[0], counter=True)
@@ -109,16 +116,18 @@ class OperationSell(AbstractOperationWindow):
 
 	def onRemoveGood(self, row: int, column: int):
 		"""
-
+			Process logic after double click on good in the buffer-table
+			:param row: good row index in the table,
+			:param column: good column index in the table
 		"""
 
-		#
+		# skip action, row with 'id'
 		if row == 0:
 			return
-		#
+		# necessary variables
 		bufferTable, to_remove_wr = self.tables[1], []
 		good_id, count_ind = int(bufferTable.verticalHeaderItem(row).text()), list(self.columns['warehouse_goods'].keys()).index('count')
-		#
+		# remove row from the buffer-table
 		for warehouse_info, warehouse_goods in self.__operation['context'].items():
 			if good_id in warehouse_goods:
 				for bufferRow in self.__buffer[warehouse_info['from']]:
@@ -137,37 +146,40 @@ class OperationSell(AbstractOperationWindow):
 				del self.__operation_full_context[SellingContextKey(self.combo_boxes[1].itemText(self.combo_boxes[1].findData(warehouse_info['from'])))]
 				if not warehouse_goods:
 					to_remove_wr.append(warehouse_info)
-		#
+		# delete additional information in self.__operation['context']
 		for warehouse_info in to_remove_wr:
 			del self.__operation['context'][warehouse_info]
-		
+		# delete row from visualisation
 		bufferTable.removeRow(row)
-
+		# change or not the 'Ok' button availability
 		self.ready_to_accept()
 
 	def onGoodsDoubleClicked(self, row: int, column: int):
 		"""
-
+			Process logic after double click on good in the goods-table
+			:param row: good row index in the table,
+			:param column: good column index in the table
 		"""
 
+		# skip action, rows with 'id' and combo_box
 		if row == 0 or column == (spin_box:=len(self.columns['warehouse_goods'])):
 			return
-
+		# skip action
 		if self.__warehouse == -1:
 			return
-
+		# necessary variables
 		table = self.tables[0]
-
 		good_id, quantity = int(table.verticalHeaderItem(row).text()), table.cellWidget(row, spin_box).value()
+		# skip action
 		if quantity == 0:
 			return
-
+		# create operation keys
 		operation_key = SellingContextKey(self.__warehouse)
 		operation_full_context_key = SellingContextKey(self.combo_boxes[1].itemText(self.combo_boxes[1].findData(self.__warehouse)))
-
+		# avoid errors (KeyError)
 		self.__operation['context'].setdefault(operation_key, {})
 		self.__operation_full_context.setdefault(operation_full_context_key, {})
-
+		# form self.__operation['context']
 		if self.__operation['context'][operation_key].get(good_id) is None:
 			self.__operation['context'][operation_key][good_id] = 0
 			self.__operation_full_context[operation_full_context_key][good_id] = {'count': 0}
@@ -175,18 +187,18 @@ class OperationSell(AbstractOperationWindow):
 				' '.join([self.tables[0].item(row, j).text() for j in [i for i, key in enumerate(self.columns['warehouse_goods']) if key in ['articul', 'name']]])
 		self.__operation['context'][operation_key][good_id] += quantity
 		self.__operation_full_context[operation_full_context_key][good_id]['count'] += quantity
-		#
+		# new quantity of the good
 		newLimit = int(table.item(row, count_ind:=list(self.columns['warehouse_goods'].keys()).index('count')).text()) - quantity
 		for bufferRow in self.__buffer[self.__warehouse]:
 			if bufferRow[0] == good_id:
 				bufferRow[count_ind+1] = newLimit
 				break
-		#
+		# change spin box settings
 		table.item(row, count_ind).setText(f"{newLimit}")
 		spinBox = table.cellWidget(row, spin_box)
 		spinBox.setRange(0, newLimit)
 		spinBox.setValue(0)
-		
+		# change visualisation quantity of the good
 		bufferTable, good_id = self.tables[1], str(good_id)
 		i = 0
 		for i in range(1, bufferTable.rowCount()):
@@ -205,26 +217,26 @@ class OperationSell(AbstractOperationWindow):
 					bufferItem = QtWidgets.QTableWidgetItem(str(quantity))
 					bufferItem.setTextAlignment(QtCore.Qt.AlignCenter)
 					bufferTable.setItem(i, j, bufferItem)
-
+		# change or not the 'Ok' button availability
 		self.ready_to_accept()
 
 	def acceptCreating(self):
 		"""
-
+			Processes Ok button, which creates transaction
 		"""
 
+		# skip action or continue
 		if self.__client == -1:
 			QtWidgets.QMessageBox.warning(self, "Предупреждение", f"Для начала выберите клиента")
 			return
 		else:
 			self.__operation['client'] = self.__client
-
+		# text of the confirm message
 		text = f"<h3>Клиент: {self.get_info(self.__info_fields[0])}.</h3>"
-		# text = ""
 		# create information message
 		for transportation, transportation_context in self.__operation_full_context.items():
 			text += f"<h3>Из склада {transportation['from']}:</h3>"
 			for good_id, good_info in transportation_context.items():
-				text += f"<h6><pre>    {good_info['good']}, count={good_info['count']}, good_id={good_id}</pre></h6>"
-		
+				text += f"<h6><pre>    {good_info['good']}, count={good_info['count']}, good_id={good_id}</pre></h6>"		
+		# create the confirm window
 		super().acceptCreating(text)

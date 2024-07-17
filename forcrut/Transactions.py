@@ -1,8 +1,8 @@
 from PyQt5 import QtWidgets, QtCore
-from Constants import centerWidget, Constants, fill_table, open_file
+from Constants import center_widget, Constants, fill_table, open_file
 from .Filter import FilterButton
 from typing import Generator, Iterator, Callable
-from .NewTransaction import createTransaction
+from .NewTransaction import create_transaction
 from DB.DB import Database
 
 
@@ -29,7 +29,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		super().__init__()
 		# set title and window dimensions
 		self.setWindowTitle("Транзакции")
-		self.setGeometry(*centerWidget(800, 600))
+		self.setGeometry(*center_widget(800, 600))
 		# required fields
 		self.__user = user
 		self.__columns = columns
@@ -149,20 +149,25 @@ class MainWindow(QtWidgets.QMainWindow):
 		# turn off the button
 		bufferButton.setEnabled(False)
 		# new operation window
-		bufferNewOperation = createTransaction(operation_id, bufferButton.text(), parent=self, user=self.__user, db=self.__db)
+		bufferNewOperation = create_transaction(operation_id, bufferButton.text(), parent=self, user=self.__user, db=self.__db)
 		# turn on the button after creating will be completed
 		bufferNewOperation.closed.connect(lambda: bufferButton.setEnabled(True))
 		# show the new operation window
 		bufferNewOperation.show()
+		bufferNewOperation.newTransaction.connect(self.reload)
 
 	def openSource(self, source_name: str) -> None:
 		"""
-
+			Buttons other than operations
 		"""
 
 		match source_name:
 			case "templateView":
 				open_file("templates/contract_template.docx")
+			case "stuffView":
+				pass
+			case "clientsView":
+				pass
 			case _:
 				pass
 
@@ -176,6 +181,7 @@ class MainWindow(QtWidgets.QMainWindow):
 	def reload(self, data: Iterator|Callable|list|None=None):
 		"""
 			Reload data in table
+			:param data: object with data to fill into table
 		"""
 
 		if data is None:

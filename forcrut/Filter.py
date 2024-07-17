@@ -1,9 +1,10 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
-from Constants import centerWidget, Constants
+from Constants import center_widget, Constants
 from functools import partial
 from functools import cmp_to_key
 import re
 from typing import Callable, Any, Iterator
+import warnings
 
 
 class FilterButton(QtWidgets.QToolButton):
@@ -44,13 +45,6 @@ class FilterButton(QtWidgets.QToolButton):
 		self.setMenu(menu)
 		self.setPopupMode(QtWidgets.QToolButton.InstantPopup)
 
-	# def setParent(self, parent: QtCore.QObject) -> None:
-	# 	"""
-
-	# 	"""
-
-	# 	super().setParent(parent)
-
 	def setColumns(self, columns: dict):
 		"""
 			Sets columns
@@ -82,20 +76,19 @@ class FilterButton(QtWidgets.QToolButton):
 
 	def filteredData(self, data: Iterator) -> None:
 		"""
-			Handler the filtered signal of the menu
+			Processes the filtered signal of the menu
 		"""
 
 		self.filtered.emit(data)
 
 	def closeEvent(self, event) -> None:
 		"""
-			Handler closing event
+			Processes closing event
 		"""
 
 		# close sorting widget if it exists
 		if not self.sortingWidget is None:
 			self.sortingWidget.close()
-
 		# close conditions widget if it exists
 		if not self.conditionsWidget is None:
 			self.conditionsWidget.close()
@@ -122,7 +115,6 @@ class AbstractFilterWidget(QtWidgets.QDialog):
 		"""
 
 		super().__init__(parent)
-		
 		# necessary variables
 		self.instructions = dict()
 		self.options = []
@@ -147,7 +139,7 @@ class AbstractFilterWidget(QtWidgets.QDialog):
 
 	def acceptFilter(self, table: QtWidgets.QTableWidget, handler: Callable[[QtCore.QObject, dict], None]|None=None) -> None:
 		"""
-			Handler Ok button, which filter data.
+			Processes Ok button, which filter data.
 			:param table: QtWidgets.QTableWidget with data to filter,
 			:param handler: function, which takes filtered data
 		"""
@@ -156,7 +148,7 @@ class AbstractFilterWidget(QtWidgets.QDialog):
 
 	def closeEvent(self, event) -> None:
 		"""
-			Handler closing event
+			Processes closing event
 		"""
 
 		self.closed.emit()
@@ -177,6 +169,7 @@ class SortingWidget(AbstractFilterWidget):
 			:param title: title of QDialog,
 			:param parent: parent QObject for widget,
 			:param handler: function, which takes filtered data
+			Ps. doesn't process column_type = -1
 		"""
 
 		super().__init__(columns, parent=parent, **kwargs)
@@ -185,7 +178,7 @@ class SortingWidget(AbstractFilterWidget):
 		# variable containing the last instruction sequence number
 		self.__q = 0
 		# QDialog setting
-		self.setGeometry(*centerWidget(400, 75*(len(columns)+2)))
+		self.setGeometry(*center_widget(400, 75*(len(columns)+2)))
 		# filling header fields
 		for j, field in enumerate(['<b>Поле</b>', '<b>Порядок</b>', '<b>По возрастанию</b>', '<b>По убыванию</b>']):
 			bufferElem = QtWidgets.QLabel(field, parent=self.gridWidget)
@@ -193,10 +186,9 @@ class SortingWidget(AbstractFilterWidget):
 			bufferElem.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
 			self.gridLayout.addWidget(bufferElem, 0, j, QtCore.Qt.AlignCenter)
 		# filling the settings
-		for i, (column, column_type) in enumerate(columns.items(), start=1):
-			# TODO difficult to process
-			# if column_type == -1:
-			# 	pass
+		i = 1
+		for column, columnType in columns.items():
+			# possible here to add checking missed Columns
 			# column label
 			bufferElem = QtWidgets.QLabel(column, parent=self.gridWidget)
 			bufferElem.setWordWrap(True)
@@ -217,10 +209,11 @@ class SortingWidget(AbstractFilterWidget):
 			bufferElem.addButton(btn2, 1)
 			# handler button group
 			bufferElem.buttonClicked.connect(partial(self.addSortOrder, i-1))
+			i += 1
 
 	def updateSortOrder(self, rowId: int, value: int) -> None:
 		"""
-			Handler sorting order 
+			Processes sorting order 
 		"""
 
 		absentValue = set(range(1, self.__q + 1)) - {spinBox.value() for spinBox, _ in self.options}
@@ -231,7 +224,7 @@ class SortingWidget(AbstractFilterWidget):
 
 	def addSortOrder(self, rowId: int):
 		"""
-			Handler new setting
+			Processes new setting
 		"""
 
 		if (spinBox:=self.options[rowId][0]).value() == 0:
@@ -242,21 +235,20 @@ class SortingWidget(AbstractFilterWidget):
 					bufferSpinBox.setRange(1, self.__q)
 			spinBox.setValue(self.__q)
 
-
 	def acceptFilter(self, table: QtWidgets.QTableWidget, handler: Callable[[QtCore.QObject, dict], None]|None=None) -> None:
 		"""
-			Handler Ok button, which filter data.
+			Processes Ok button, which filter data.
 			:param table: QtWidgets.QTableWidget with data to filter,
 			:param handler: function, which takes filtered data
 		"""
 
+		# from instructions
 		for (column, columnType), [sortOrder, inputs] in zip(self.get_columns().items(), self.options):
 			instruction = inputs.checkedId()
 			if instruction != -1:
 				self.instructions[column] = {'order': sortOrder.value(), 'id': list(self.get_columns().keys()).index(column), 
 											 'option': Constants.ASCENDING if instruction == 0 else Constants.DESCENDING, 
 											 'type': columnType}
-
 		# check type of instructions
 		if self.instructions.get('__type__') == Constants.SORTING:
 			# sorting
@@ -278,10 +270,6 @@ class SortingWidget(AbstractFilterWidget):
 							bufferDate2 = QtCore.QDateTime.fromString(row2[index], Constants.PYQT_DATETIME_FORMAT)
 							if bufferDate2.isNull():
 								raise Exception(f"Unreadable date {row2[index]} (required format: {Constants.PYQT_DATETIME_FORMAT})")
-						case _:
-							# TODO ignore unrecognised type of data
-							pass
-							# raise Exception(f"ConditionsWidget: 'Unrecognised column {columnType}'")
 					if bufferDate1 == bufferDate2:
 						continue
 					match instruction['option']:
@@ -296,17 +284,17 @@ class SortingWidget(AbstractFilterWidget):
 			data = iter(data)
 		else:
 			raise Exception(f"Unrecognised instructions type {self.instructions.get('type')} in {self.instructions}")
-
+		# data is filtered
 		self.filtered.emit(data)
-
+		# process the filtered data
 		if handler:
 			handler(data)
-
+		# accept filter
 		super().acceptFilter(table, handler)
 
 	def closeEvent(self, event):
 		"""
-			Handler closing event
+			Processes closing event
 		"""
 
 		self.__q = 0
@@ -332,7 +320,7 @@ class ConditionsWidget(AbstractFilterWidget):
 		# type of the instruction
 		self.instructions['__type__'] = Constants.CONDITIONS_SORTING
 		# QDialog setting
-		self.setGeometry(*centerWidget(400, 75*(len(columns)+2)))
+		self.setGeometry(*center_widget(400, 75*(len(columns)+2)))
 		# filling header fields
 		for j, field in enumerate(['<b>Поле</b>', '<b>Тип</b>', '<b>Первая опция</b>', '<b>Вторая опция</b>']):
 			bufferElem = QtWidgets.QLabel(field, parent=self.gridWidget)
@@ -382,14 +370,14 @@ class ConditionsWidget(AbstractFilterWidget):
 						inputDate.setCalendarPopup(True)
 						inputDate.setDateTime(Constants.DATETIME_DEFAULT)
 						self.gridLayout.addWidget(optionWidget, i, j, QtCore.Qt.AlignCenter)
-				case _:
-					# TODO ignore unrecognised type of data
+				case -1:
 					pass
-					# raise Exception(f"ConditionsWidget: 'Unrecognised column {columnType}'")
+				case _:
+					warnings.warn(f"ConditionsWidget: 'Unrecognised column {columnType}'")
 
 	def acceptFilter(self, table: QtWidgets.QTableWidget, handler: Callable[[QtCore.QObject, dict], None]|None=None) -> None:
 		"""
-			Handler Ok button, which filter data.
+			Processes Ok button, which filter data.
 			:param table: QtWidgets.QTableWidget with data to filter,
 			:param handler: function, which takes filtered data
 		"""
@@ -405,6 +393,8 @@ class ConditionsWidget(AbstractFilterWidget):
 					instructions = [buffer if (buffer:=input_.text().strip()) else None for input_ in inputs]
 				case Constants.DATETIME:
 					instructions = [buffer if (buffer:=input_.dateTime()) != Constants.DATETIME_DEFAULT and not buffer.isNull() else None for input_ in inputs]
+				case -1:
+					pass
 
 			if [instruction for instruction in instructions if instruction or instruction == 0]:
 				self.instructions[column] = {'id': list(self.get_columns().keys()).index(column), 'options': instructions, 'type': columnType}
@@ -449,10 +439,10 @@ class ConditionsWidget(AbstractFilterWidget):
 			data = filter(__check, list(table.getData()))
 		else:
 			raise Exception(f"Unrecognised instructions type {self.instructions.get('type')} in {self.instructions}")
-
+		# data is filtered
 		self.filtered.emit(data)
-		
+		# process the filtered data
 		if handler:
 			handler(data)
-
+		# accept filter
 		super().acceptFilter(table, handler)
