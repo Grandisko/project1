@@ -396,7 +396,7 @@ class Database:
         :param data_dict: Dictionary with data to be added
         """
         if data_dict['type'] == 0:  # Relocate
-            transaction_type = 'elocate'
+            transaction_type = 'relocate'
             who = data_dict['who']
             datetime = data_dict['datetime']
             for context in data_dict['context']:
@@ -445,7 +445,7 @@ class Database:
                 self.cursor.execute("INSERT INTO AcceptanceData (good_id, acceptance_id, count) VALUES (?,?,?)",
                                   (good_id, acceptance_id, count))
         elif data_dict['type'] == 3:  # Sell
-            transaction_type = 'ell'
+            transaction_type = 'sell'
             who = data_dict['who']
             datetime = data_dict['datetime']
             client_id = data_dict['client']
