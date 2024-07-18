@@ -82,9 +82,6 @@ class Database:
                 who INTEGER,
                 time DATETIME,
                 PS TEXT,
-                who_login TEXT GENERATED ALWAYS AS (
-                    SELECT a.login FROM Admin a WHERE a.id = Transactions.who
-                ) VIRTUAL,
                 FOREIGN KEY (who) REFERENCES Admin(id) ON DELETE CASCADE
             )
         """)
@@ -215,11 +212,23 @@ class Database:
                 f"INSERT INTO {table_name} ({', '.join(data.keys())}) VALUES ({', '.join('?' for _ in data.values())})",
                 (*data.values(),))
         self.conn.commit()
+
     def get_transactions(self):
         """
         Извлекает все транзакции из таблицы Transactions.
         """
-        self.cursor.execute("SELECT * FROM Transactions")
+        self.cursor.execute("""
+            SELECT 
+                t.id, 
+                t.type, 
+                CAST(t.who AS TEXT) || '/' || a.login AS who, 
+                t.time, 
+                t.PS
+            FROM 
+                Transactions t
+            JOIN 
+                Admin a ON t.who = a.id
+        """)
         return self.cursor.fetchall()
     def get_clients(self):
         """
