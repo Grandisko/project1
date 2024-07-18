@@ -260,7 +260,10 @@ class SortingWidget(AbstractFilterWidget):
 						case Constants.NUMERIC:
 							bufferDate1, bufferDate2 = float(row1[index]), float(row2[index])
 						case Constants.FOREIGN_KEY:
-							bufferDate1, bufferDate2 = int(row1[index]), int(row2[index])
+							try:
+								bufferDate1, bufferDate2 = int(row1[index].split('/')[0]), int(row2[index].split('/')[0])
+							except KeyError:
+								bufferDate1, bufferDate2 = row1[index], row2[index]
 						case Constants.TEXT:
 							bufferDate1, bufferDate2 = row1[index], row2[index]
 						case Constants.DATETIME:
@@ -338,7 +341,7 @@ class ConditionsWidget(AbstractFilterWidget):
 			# special filling according to the type of data
 			match columnType:
 				case Constants.NUMERIC | Constants.TEXT | Constants.FOREIGN_KEY:
-					for j, labelName in zip([2, 3], ['Нижняя граница', 'Верхняя граница'] if columnType in [Constants.NUMERIC, Constants.FOREIGN_KEY] else ['Поиск по значению', 'Поиск по регулярке']):
+					for j, labelName in zip([2, 3], ['Нижняя граница', 'Верхняя граница'] if columnType == Constants.NUMERIC else ['Поиск по значению', 'Поиск по регулярке']):
 						optionWidget = QtWidgets.QWidget(self.gridWidget)
 						layout = QtWidgets.QVBoxLayout(optionWidget)
 						layout.addWidget(label:=QtWidgets.QLabel(labelName, parent=optionWidget))
@@ -352,9 +355,6 @@ class ConditionsWidget(AbstractFilterWidget):
 						if columnType == Constants.NUMERIC:
 							inputLine.setValidator(validator:=QtGui.QRegularExpressionValidator(optionWidget))
 							validator.setRegularExpression(QtCore.QRegularExpression(r'^[+-]?(\d*\.?\d+)|(\d+)$'))
-						elif columnType == Constants.FOREIGN_KEY:
-							inputLine.setValidator(validator:=QtGui.QRegularExpressionValidator(optionWidget))
-							validator.setRegularExpression(QtCore.QRegularExpression(r'^\d+$'))
 
 						self.gridLayout.addWidget(optionWidget, i, j, QtCore.Qt.AlignCenter)
 				case Constants.DATETIME:
@@ -387,9 +387,7 @@ class ConditionsWidget(AbstractFilterWidget):
 			match columnType:
 				case Constants.NUMERIC:
 					instructions = [float(buffer) if (buffer:=input_.text().strip()) and input_.hasAcceptableInput() else None for input_ in inputs]
-				case Constants.FOREIGN_KEY:
-					instructions = [int(buffer) if (buffer:=input_.text().strip()) and input_.hasAcceptableInput() else None for input_ in inputs]
-				case Constants.TEXT:
+				case Constants.TEXT | Constants.FOREIGN_KEY:
 					instructions = [buffer if (buffer:=input_.text().strip()) else None for input_ in inputs]
 				case Constants.DATETIME:
 					instructions = [buffer if (buffer:=input_.dateTime()) != Constants.DATETIME_DEFAULT and not buffer.isNull() else None for input_ in inputs]
@@ -415,13 +413,8 @@ class ConditionsWidget(AbstractFilterWidget):
 								return False
 							if not (instruction['options'][1] is None) and float(row[instruction['id'] + 1]) > instruction['options'][1]:
 								return False
-						case Constants.FOREIGN_KEY:
-							if not (instruction['options'][0] is None) and int(row[instruction['id'] + 1]) < instruction['options'][0]:
-								return False
-							if not (instruction['options'][1] is None) and int(row[instruction['id'] + 1]) > instruction['options'][1]:
-								return False
-						case Constants.TEXT:
-							if not (instruction['options'][0] is None) and not re.match(rf".*{instruction['options'][0]}.*", row[instruction['id'] + 1]):
+						case Constants.TEXT | Constants.FOREIGN_KEY:
+							if not (instruction['options'][0] is None) and not row[instruction['id'] + 1].startswith(instruction['options'][0]):
 								return False
 							if not (instruction['options'][1] is None) and not re.search(rf"{instruction['options'][1]}", row[instruction['id'] + 1]):
 								return False
