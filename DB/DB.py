@@ -389,78 +389,132 @@ class Database:
         else:
             raise ValueError(f"Unknown transaction type: {transaction_type}")
 
+    def get_expire_date_by_good_id(self, good_id):
+        self.cursor.execute("SELECT expire_date FROM GoodsWarehouse WHERE good_id =?", (good_id,))
+        result = self.cursor.fetchone()
+        if result:
+            return result[0]
+        else:
+            return None
+
+    def _insert_transaction(self, transaction_type, who, datetime):
+        self.cursor.execute("INSERT INTO Transactions (type, who, time) VALUES (?,?,?)",
+                            (transaction_type, who, datetime))
+
+    def _insert_transportation(self, transaction_id, from_wh_id, to_wh_id):
+        self.cursor.execute("INSERT INTO Transportation (transaction_id, from_wh_id, to_wh_id) VALUES (?,?,?)",
+                            (transaction_id, from_wh_id, to_wh_id))
+
+    def _insert_write_off(self, transaction_id, from_wh_id):
+        self.cursor.execute("INSERT INTO WriteOff (transaction_id, from_wh_id) VALUES (?,?)",
+                            (transaction_id, from_wh_id))
+
+    def _insert_acceptance(self, transaction_id, to_wh_id):
+        self.cursor.execute("INSERT INTO Acceptance (transaction_id, to_wh) VALUES (?,?)", (transaction_id, to_wh_id))
+
+    def _insert_sell(self, transaction_id, client_id, from_wh_id):
+        self.cursor.execute("INSERT INTO Sell (transaction_id, client_id, from_wh_id) VALUES (?,?,?)",
+                            (transaction_id, client_id, from_wh_id))
+
+    def _insert_transportation_data(self, good_id, transportation_id, count, expire_date):
+        self.cursor.execute(
+            "INSERT INTO TransportationData (good_id, transportation_id, count, expire_date) VALUES (?,?,?,?)",
+            (good_id, transportation_id, count, expire_date))
+
+    def _insert_write_off_data(self, good_id, write_off_id, count, expire_date):
+        self.cursor.execute("INSERT INTO WriteOffData (good_id, write_of_id, count, expire_date) VALUES (?,?,?,?)",
+                            (good_id, write_off_id, count, expire_date))
+
+    def _insert_acceptance_data(self, good_id, acceptance_id, count, expire_date):
+        self.cursor.execute("INSERT INTO AcceptanceData (good_id, acceptance_id, count, expire_date) VALUES (?,?,?,?)",
+                            (good_id, acceptance_id, count, expire_date))
+
+    def _insert_sell_data(self, good_id, sell_id, count, expire_date):
+        self.cursor.execute("INSERT INTO SellData (good_id, sell_id, count, expire_date) VALUES (?,?,?,?)",
+                            (good_id, sell_id, count, expire_date))
+
+    def _insert_goods_warehouse(self, good_id, warehouse_id, count, expire_date, accept_date, accept_id):
+        self.cursor.execute(
+            "INSERT INTO GoodsWarehouse (good_id, warehouse_id, count, expire_date, accept_date, accept_id) VALUES (?,?,?,?,?,?)",
+            (good_id, warehouse_id, count, expire_date, accept_date, accept_id))
+    def _update_goods_warehouse(self, good_id, warehouse_id, count, expire_date):
+        self.cursor.execute(
+            "UPDATE GoodsWarehouse SET count = count +?, expire_date =? WHERE good_id =? AND warehouse_id =?",
+            (count, expire_date, good_id, warehouse_id))
+
+    def _update_goods(self, good_id, count):
+        self.cursor.execute("UPDATE Goods SET count = count -? WHERE id =?", (count, good_id))
+
     def add_data_from_dict(self, data_dict):
         """
         Add data from a dictionary to the corresponding tables in the database.
         :param db: Database object
         :param data_dict: Dictionary with data to be added
         """
-        if data_dict['type'] == 0:  # Relocate
-            transaction_type = 'relocate'
-            who = data_dict['who']
-            datetime = data_dict['datetime']
+        transaction_type = {
+            0: 'Relocate',
+            1: 'WriteOff',
+            2: 'Accept',
+            3: 'Sell'
+        }[data_dict['type']]
+
+        who = data_dict['who']
+        datetime = data_dict['datetime']
+
+        if transaction_type == 'Relocate':
             for context in data_dict['context']:
                 from_wh = context['from']
                 to_wh = context['to']
                 for good_id, count in context.items():
-                    if good_id != 'from' and good_id != 'to':
-                        self.cursor.execute("INSERT INTO Transactions (type, who, time) VALUES (?,?,?)",
-                                          (transaction_type, who, datetime))
+                    if good_id not in ('from', 'to'):
+                        self._insert_transaction(transaction_type, who, datetime)
                         transaction_id = self.cursor.lastrowid
-                        self.cursor.execute(
-                            "INSERT INTO Transportation (transaction_id, from_wh_id, to_wh_id) VALUES (?,?,?)",
-                            (transaction_id, from_wh, to_wh))
+                        self._insert_transportation(transaction_id, from_wh, to_wh)
                         transportation_id = self.cursor.lastrowid
-                        self.cursor.execute(
-                            "INSERT INTO TransportationData (good_id, transportation_id, count) VALUES (?,?,?)",
-                            (good_id, transportation_id, count))
-        elif data_dict['type'] == 1:  # WriteOff
-            transaction_type = 'write_off'
-            who = data_dict['who']
-            datetime = data_dict['datetime']
+                        expire_date = self.get_expire_date_by_good_id(good_id) or data_dict['expire_date']
+                        self._insert_transportation_data(good_id, transportation_id, count, expire_date)
+                        self._insert_goods_warehouse(good_id, to_wh, count, expire_date, datetime, transaction_id)
+
+        elif transaction_type == 'WriteOff':
             for context in data_dict['context']:
                 from_wh = context['from']
                 for good_id, count in context.items():
                     if good_id != 'from':
-                        self.cursor.execute("INSERT INTO Transactions (type, who, time) VALUES (?,?,?)",
-                                          (transaction_type, who, datetime))
+                        self._insert_transaction(transaction_type, who, datetime)
                         transaction_id = self.cursor.lastrowid
-                        self.cursor.execute("INSERT INTO WriteOff (transaction_id, from_wh_id) VALUES (?,?)",
-                                          (transaction_id, from_wh))
+                        self._insert_write_off(transaction_id, from_wh)
                         write_off_id = self.cursor.lastrowid
-                        self.cursor.execute("INSERT INTO WriteOffData (good_id, write_of_id, count) VALUES (?,?,?)",
-                                          (good_id, write_off_id, count))
-        elif data_dict['type'] == 2:  # Accept
-            transaction_type = 'accept'
-            who = data_dict['who']
-            datetime = data_dict['datetime']
+                        expire_date = self.get_expire_date_by_good_id(good_id) or data_dict['expire_date']
+                        self._insert_write_off_data(good_id, write_off_id, count, expire_date)
+                        self._update_goods_warehouse(good_id, from_wh, -count, expire_date)
+                        self._update_goods(good_id, count)
+
+        elif transaction_type == 'Accept':
             warehouse_id = data_dict['warehouse']
             for good_id, count in data_dict['context'].items():
-                self.cursor.execute("INSERT INTO Transactions (type, who, time) VALUES (?,?,?)",
-                                  (transaction_type, who, datetime))
+                self._insert_transaction(transaction_type, who, datetime)
                 transaction_id = self.cursor.lastrowid
-                self.cursor.execute("INSERT INTO Acceptance (transaction_id, to_wh) VALUES (?,?)",
-                                  (transaction_id, warehouse_id))
+                self._insert_acceptance(transaction_id, warehouse_id)
                 acceptance_id = self.cursor.lastrowid
-                self.cursor.execute("INSERT INTO AcceptanceData (good_id, acceptance_id, count) VALUES (?,?,?)",
-                                  (good_id, acceptance_id, count))
-        elif data_dict['type'] == 3:  # Sell
-            transaction_type = 'sell'
-            who = data_dict['who']
-            datetime = data_dict['datetime']
+                expire_date = self.get_expire_date_by_good_id(good_id) or data_dict['expire_date']
+                self._insert_acceptance_data(good_id, acceptance_id, count, expire_date)
+                self._insert_goods_warehouse(good_id, warehouse_id, count, expire_date, datetime, acceptance_id)
+
+        elif transaction_type == 'Sell':
             client_id = data_dict['client']
             for context in data_dict['context']:
                 from_wh = context['from']
                 for good_id, count in context.items():
                     if good_id != 'from':
-                        self.cursor.execute("INSERT INTO Transactions (type, who, time) VALUES (?,?,?)",
-                                          (transaction_type, who, datetime))
+                        self._insert_transaction(transaction_type, who, datetime)
                         transaction_id = self.cursor.lastrowid
-                        self.cursor.execute("INSERT INTO Sell (transaction_id, client_id, from_wh_id) VALUES (?,?,?)",
-                                          (transaction_id, client_id, from_wh))
+                        self._insert_sell(transaction_id, client_id, from_wh)
                         sell_id = self.cursor.lastrowid
-                        self.cursor.execute("INSERT INTO SellData (good_id, sell_id, count) VALUES (?,?,?)",
-                                          (good_id, sell_id, count))
+                        expire_date = self.get_expire_date_by_good_id(good_id) or data_dict['expire_date']
+                        self._insert_sell_data(good_id, sell_id, count, expire_date)
+                        self._update_goods_warehouse(good_id, from_wh, -count, expire_date)
+                        self._update_goods(good_id, count)
+
         self.conn.commit()
     def close(self):
         self.conn.close()
